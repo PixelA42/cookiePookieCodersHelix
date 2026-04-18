@@ -10,7 +10,7 @@ Follow these steps properly to avoid breaking the repository.
 Run this only once:
 
     git clone https://github.com/PixelA42/cookiePookieCodersHelix.git
-    cd cookiePookieCodersHelix
+    npm i
 
 ---
 
