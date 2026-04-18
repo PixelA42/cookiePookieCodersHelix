@@ -8,7 +8,7 @@ The MVP serves two primary personas:
 - **Producer operations managers** — submit heat output profiles, view ranked Consumer matches
 - **Consumer operations managers** — submit demand profiles, view ranked Producer matches
 
-The platform is built on a Next.js 16 frontend (App Router, React 19, Tailwind CSS 4), a Node.js or FastAPI backend, and a PostgreSQL database with the PostGIS extension for spatial queries. All data operations are exposed through a versioned RESTful API (`/api/v1/`) described by an OpenAPI 3.1 specification.
+The platform is built on a Next.js 16 frontend (App Router, React 19, Tailwind CSS 4), a Python/FastAPI backend (served by Uvicorn), and a PostgreSQL database with the PostGIS extension for spatial queries. All data operations are exposed through a versioned RESTful API (`/api/v1/`) described by an OpenAPI 3.1 specification that FastAPI auto-generates from Pydantic models.
 
 ---
 
@@ -72,7 +72,7 @@ sequenceDiagram
 
 ### Deployment Topology
 
-The frontend is deployed as a Next.js application (App Router with React Server Components). The backend runs as a separate service (Node.js/Express or FastAPI). Both share the same PostgreSQL + PostGIS instance. A lightweight job queue (e.g., BullMQ backed by Redis, or pg-boss backed by PostgreSQL) handles asynchronous score recomputation triggered by profile updates.
+The frontend is deployed as a Next.js application (App Router with React Server Components). The backend runs as a separate Python/FastAPI service (served by Uvicorn). Both share the same PostgreSQL + PostGIS instance. A lightweight job queue (Arq backed by Redis, or Celery with Redis broker) handles asynchronous score recomputation triggered by profile updates.
 
 ---
 
@@ -125,17 +125,35 @@ src/app/
 | `ScoreFilterSlider` | Minimum score filter; triggers client-side list update |
 | `AdminWeightsForm` | Scoring weight editor with sum-to-1.0 validation |
 
-### Backend Modules
+### Backend Modules (Python/FastAPI)
+
+```
+backend/
+├── main.py                  # FastAPI app entry point, router registration
+├── requirements.txt         # Pinned dependencies
+├── .env.example             # Environment variable template
+├── app/
+│   ├── routers/             # FastAPI APIRouter modules (auth, profiles, matches, admin, reference)
+│   ├── services/            # Business logic (scoring engine, spatial queries, email)
+│   ├── repositories/        # DB access layer (asyncpg parameterized queries)
+│   ├── models/              # Pydantic v2 request/response schemas
+│   ├── db/
+│   │   ├── migrations/      # Plain SQL migration files
+│   │   ├── seeds/           # Seed SQL files
+│   │   └── migrate.py       # Migration runner script
+│   ├── queue/               # Arq worker definitions and job types
+│   └── middleware/          # JWT auth dependency, error handler
+```
 
 | Module | Responsibility |
 |---|---|
-| `auth` | Registration, login, JWT issuance, email verification |
-| `profiles` | CRUD for Heat Profiles and Demand Profiles |
-| `scoring` | Compatibility Score computation (distance, temperature, schedule sub-scores) |
-| `matches` | Query and return ranked match results per facility |
-| `admin` | Scoring weight and distance threshold configuration |
-| `spatial` | PostGIS query helpers (ST_DistanceSphere, GIST index usage) |
-| `queue` | Job queue integration for async recompute triggers |
+| `routers/auth` | Registration, login, JWT issuance, email verification |
+| `routers/profiles` | CRUD for Heat Profiles and Demand Profiles |
+| `services/scoring` | Compatibility Score computation (distance, temperature, schedule sub-scores) |
+| `routers/matches` | Query and return ranked match results per facility |
+| `routers/admin` | Scoring weight and distance threshold configuration |
+| `services/spatial` | PostGIS query helpers (ST_DistanceSphere, GIST index usage) |
+| `queue/worker` | Arq job queue worker for async recompute triggers |
 
 ### API Endpoints (OpenAPI 3.1 Contract)
 

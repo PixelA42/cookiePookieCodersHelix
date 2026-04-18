@@ -38,7 +38,7 @@ Collected as part of Heat Profile and Demand Profile submission. Stored in `heat
 
 ### Storage Notes
 
-- Coordinates are validated at the application layer **before** being passed to PostGIS.
+- Coordinates are validated at the application layer (Pydantic v2 field validators) **before** being passed to PostGIS.
 - The `location` column uses `GEOGRAPHY` (not `GEOMETRY`) to ensure `ST_DistanceSphere` returns metres on a spherical earth model.
 - A GIST spatial index is mandatory on both `heat_profiles.location` and `demand_profiles.location` for proximity query performance.
 
