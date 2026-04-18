@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     smtp_from_email: str = Field(..., alias="SMTP_FROM_EMAIL")
     smtp_use_tls: bool = Field(True, alias="SMTP_USE_TLS")
 
+    ml_service_url: str | None = Field(None, alias="ML_SERVICE_URL")
+    ml_service_timeout_seconds: int = Field(8, alias="ML_SERVICE_TIMEOUT_SECONDS")
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -3,12 +3,19 @@ import hmac
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from jose import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.db import get_db
+from app.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def hash_password(password: str) -> str:
@@ -47,3 +54,32 @@ def hash_otp(otp: str) -> str:
 def verify_otp(plain_otp: str, stored_hash: str) -> bool:
     calculated_hash = hash_otp(plain_otp)
     return hmac.compare_digest(calculated_hash, stored_hash)
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    settings = get_settings()
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        subject = payload.get("sub")
+        if not subject:
+            raise credentials_exception
+        user_id = int(subject)
+    except (JWTError, ValueError) as exc:
+        raise credentials_exception from exc
+
+    stmt = select(User).where(User.id == user_id)
+    user = db.execute(stmt).scalars().first()
+    if not user:
+        raise credentials_exception
+    return user
+
+
+def get_verified_current_user(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.is_email_verified:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified")
+    return current_user

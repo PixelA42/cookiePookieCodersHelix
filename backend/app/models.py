@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -10,6 +10,11 @@ from app.db import Base
 class UserRole(str, Enum):
     producer = "producer"
     consumer = "consumer"
+
+
+class FeedbackLabel(str, Enum):
+    useful = "useful"
+    not_useful = "not_useful"
 
 
 class User(Base):
@@ -32,6 +37,21 @@ class User(Base):
     otp_records: Mapped[list["OtpVerification"]] = relationship(
         "OtpVerification", back_populates="user", cascade="all, delete-orphan"
     )
+    producer_profile: Mapped["ProducerProfile | None"] = relationship(
+        "ProducerProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    consumer_profile: Mapped["ConsumerProfile | None"] = relationship(
+        "ConsumerProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    producer_matches: Mapped[list["Match"]] = relationship(
+        "Match", foreign_keys="Match.producer_user_id", back_populates="producer_user"
+    )
+    consumer_matches: Mapped[list["Match"]] = relationship(
+        "Match", foreign_keys="Match.consumer_user_id", back_populates="consumer_user"
+    )
+    match_feedback: Mapped[list["MatchFeedback"]] = relationship(
+        "MatchFeedback", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class OtpVerification(Base):
@@ -47,3 +67,103 @@ class OtpVerification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     user: Mapped[User] = relationship("User", back_populates="otp_records")
+
+
+class ProducerProfile(Base):
+    __tablename__ = "producer_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    facility_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    supply_temperature_c: Mapped[float] = mapped_column(Float, nullable=False)
+    heat_output_kw: Mapped[float] = mapped_column(Float, nullable=False)
+    schedule_description: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    user: Mapped[User] = relationship("User", back_populates="producer_profile")
+
+
+class ConsumerProfile(Base):
+    __tablename__ = "consumer_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    facility_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    demand_temperature_c: Mapped[float] = mapped_column(Float, nullable=False)
+    flow_rate_lph: Mapped[float] = mapped_column(Float, nullable=False)
+    schedule_description: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    user: Mapped[User] = relationship("User", back_populates="consumer_profile")
+
+
+class Match(Base):
+    __tablename__ = "matches"
+    __table_args__ = (UniqueConstraint("producer_user_id", "consumer_user_id", name="uq_match_pair"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    producer_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    consumer_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    compatibility_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    integration_state: Mapped[str] = mapped_column(String(64), default="model_unavailable", nullable=False)
+    model_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    generated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    producer_user: Mapped[User] = relationship(
+        "User", foreign_keys=[producer_user_id], back_populates="producer_matches"
+    )
+    consumer_user: Mapped[User] = relationship(
+        "User", foreign_keys=[consumer_user_id], back_populates="consumer_matches"
+    )
+    feedback_entries: Mapped[list["MatchFeedback"]] = relationship(
+        "MatchFeedback", back_populates="match", cascade="all, delete-orphan"
+    )
+
+
+class MatchFeedback(Base):
+    __tablename__ = "match_feedback"
+    __table_args__ = (UniqueConstraint("match_id", "user_id", name="uq_match_feedback_user"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    match_id: Mapped[int] = mapped_column(
+        ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    feedback_label: Mapped[FeedbackLabel] = mapped_column(
+        SqlEnum(FeedbackLabel, name="feedback_label"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    match: Mapped[Match] = relationship("Match", back_populates="feedback_entries")
+    user: Mapped[User] = relationship("User", back_populates="match_feedback")

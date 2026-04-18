@@ -125,3 +125,9 @@ Industrial facilities (explicitly including factories and data centers) release 
 - Are there geographic boundaries that define "nearby" (administrative limits, service zones)?
 - What success metrics define platform effectiveness (e.g., viable pair count, utilization potential, avoided waste heat)?
 
+## 6. Implementation Note (Current Project Alignment)
+
+- Data persistence is standardized on PostgreSQL.
+- Production/runtime deployment targets cloud-hosted PostgreSQL.
+- Development and mock-data testing can run against local PostgreSQL with the same schema and API behavior.
+

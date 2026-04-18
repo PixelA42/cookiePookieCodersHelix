@@ -7,7 +7,7 @@ HeatREco is a simple web platform that connects industrial heat producers (facto
 
 **Frontend:** Next.js (React)
 **Backend:** Python (FastAPI)
-**Database:** Cloud-hosted (must be online)
+**Database:** PostgreSQL (cloud-hosted for production; local PostgreSQL allowed for development/mock testing)
 
 ---
 
@@ -41,15 +41,17 @@ HeatREco is a simple web platform that connects industrial heat producers (facto
 - All frontend/backend communication is via a versioned REST API (`/api/v1/`).
 - All data operations (registration, profile CRUD, matchmaking, feedback) are exposed as API endpoints.
 
-### 7. Online Database
-- All data is stored in a cloud-hosted, online database (e.g., PostgreSQL with PostGIS for geospatial queries).
+### 7. PostgreSQL Database
+- All data is stored in PostgreSQL.
+- Production uses cloud-hosted PostgreSQL (online).
+- Development/mock testing can use local PostgreSQL.
 
 ---
 
 ## Out of Scope
 - No rule-based or hard-coded scoring logic.
 - No manual or admin-only match curation.
-- No offline/local database.
+- No non-PostgreSQL persistence for product data.
 
 ---
 

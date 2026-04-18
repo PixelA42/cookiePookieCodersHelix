@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.db import Base, SessionLocal, engine
 from app.routers.auth import router as auth_router
+from app.routers.feedback import router as feedback_router
+from app.routers.matches import router as matches_router
+from app.routers.profiles import router as profiles_router
 from app.services.seed_service import seed_mock_users
 
 settings = get_settings()
@@ -36,3 +39,6 @@ def health_check() -> dict[str, str]:
 
 
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
+app.include_router(profiles_router, prefix=settings.api_v1_prefix)
+app.include_router(matches_router, prefix=settings.api_v1_prefix)
+app.include_router(feedback_router, prefix=settings.api_v1_prefix)
