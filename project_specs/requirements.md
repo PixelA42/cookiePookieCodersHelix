@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Industrial Heat Waste Recovery Optimizer (IHWRO) is a proximity-aware web platform that connects industrial heat producers (factories, data centers) with nearby heat consumers (greenhouses, cold-storage facilities, district heating networks). The platform ingests heat output profiles and demand schedules, then scores and surfaces viable heat-sharing pairs based on pipe distance, temperature compatibility, and seasonal schedule alignment. The MVP targets operations managers and sustainability leads at both producer and consumer facilities, enabling them to discover, evaluate, and initiate heat-sharing partnerships that would otherwise go undetected.
+The Industrial Heat Waste Recovery Optimizer (IHWRO) is a proximity-aware web platform that connects industrial heat producers (factories, data centers) with nearby heat consumers (greenhouses, cold-storage facilities, district heating networks). The platform ingests heat output profiles and demand schedules, then scores and surfaces viable heat-sharing pairs based on pipe distance, temperature compatibility, and seasonal schedule alignment. **Compatibility ranking remains fully deterministic** (see Requirements 4–7); optional **AI-assisted insights** (Requirement 13) explain matches in natural language and may assist with profile drafting, without altering scores. The MVP targets operations managers and sustainability leads at both producer and consumer facilities, enabling them to discover, evaluate, and initiate heat-sharing partnerships that would otherwise go undetected.
 
 ---
 
@@ -22,6 +22,8 @@ The Industrial Heat Waste Recovery Optimizer (IHWRO) is a proximity-aware web pl
 - **API Contract**: A versioned OpenAPI specification defining all request/response schemas shared between the frontend and backend teams.
 - **PostGIS**: A spatial extension for PostgreSQL that enables geographic queries such as distance calculations and proximity searches.
 - **IHWRO**: Abbreviation for Industrial Heat Waste Recovery Optimizer, the system described in this document.
+- **AI Match Insight**: A short, LLM-generated narrative for a Producer–Consumer pair that interprets the existing Compatibility Score and sub-scores in plain language; it does not compute or override any numeric score.
+- **Profile Drafting Assistant**: An optional flow that accepts free-text facility description and proposes structured Heat or Demand Profile field values for user review and edit before save.
 
 ---
 
@@ -196,3 +198,20 @@ The Industrial Heat Waste Recovery Optimizer (IHWRO) is a proximity-aware web pl
 3. THE IHWRO engineering plan SHALL define Milestone 3 as: backend implementation of profile ingestion endpoints and frontend implementation of profile creation forms — executable in parallel using mock API responses on the frontend.
 4. THE IHWRO engineering plan SHALL define Milestone 4 as: backend implementation of the Scoring Engine and proximity query logic, and frontend implementation of the match dashboard and map view — executable in parallel using mock score data on the frontend.
 5. THE IHWRO engineering plan SHALL define Milestone 5 as: frontend–backend integration, end-to-end testing, and deployment configuration.
+6. THE IHWRO engineering plan MAY define Milestone 6 as: optional AI features per Requirement 13 (LLM integration, Match Insight UI, and optional Profile Drafting Assistant), behind feature flags and environment-based API keys.
+
+---
+
+### Requirement 13: AI-Assisted Insights (Non-Scoring)
+
+**User Story:** As an operations manager, I want plain-language explanations of why a match is strong or weak, grounded in the same metrics I already see, so that I can communicate opportunities to stakeholders without manually interpreting sub-scores. I may also want help turning rough facility notes into structured profile fields.
+
+#### Acceptance Criteria
+
+1. THE IHWRO SHALL NOT use AI or machine learning to compute, replace, or re-rank Compatibility Scores; the Scoring Engine (Requirements 4–7) remains the sole source of numeric match ranking.
+2. THE IHWRO SHALL provide an **AI Match Insight** capability that, for a selected match, generates a concise narrative (recommended length 120–400 words) using only data already available to the user: facility names, Compatibility Score, sub-scores, pipe distance, ΔT, Schedule Overlap, and heat transfer medium compatibility.
+3. THE backend SHALL invoke a hosted large language model API (provider configurable via environment variables, e.g. OpenAI, Anthropic, or Azure OpenAI) using server-side credentials; client applications SHALL NOT embed API keys.
+4. THE prompt and response handling SHALL instruct the model not to invent temperatures, distances, schedules, or facility attributes not present in the supplied profile and score payload; if the model output cannot be validated as grounded, THE IHWRO SHALL omit the insight and show deterministic metrics only.
+5. WHEN the LLM API is unavailable, misconfigured, or times out, THE IHWRO SHALL degrade gracefully: the match dashboard and detail views remain fully functional with deterministic data only.
+6. THE IHWRO SHALL display a visible disclaimer on AI-generated content stating that the text is informational, may be incomplete, and does not replace engineering or economic due diligence.
+7. THE IHWRO MAY provide an optional **Profile Drafting Assistant** that accepts free-text notes and returns proposed structured values for Heat or Demand Profile fields; THE IHWRO SHALL require explicit user confirmation before persisting any AI-suggested values.
