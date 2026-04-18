@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Project Setup & Git Workflow Guide
 
-## Getting Started
+This guide is for team members who are not familiar with Git/GitHub.  
+Follow these steps properly to avoid breaking the repository.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 1. Clone the Repository
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run this only once:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+    git clone https://github.com/PixelA42/cookiePookieCodersHelix.git
+    cd cookiePookieCodersHelix
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 2. Create Your Own Branch
 
-To learn more about Next.js, take a look at the following resources:
+⚠️ Do NOT work on `main`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    git checkout -b your-name-feature
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Example:
 
-## Deploy on Vercel
+    git checkout -b pavneet-auth
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 3. Make Changes
+
+Edit the code using your editor (VS Code recommended).
+
+---
+
+## 4. Commit Your Changes
+
+    git add .
+    git commit -m "Short meaningful message"
+
+Example:
+
+    git commit -m "Added login API"
+
+---
+
+## 5. Push Your Branch
+
+    git push origin your-name-feature
+
+---
+
+## 6. Create Pull Request (PR)
+
+1. Go to GitHub repo
+2. Click **Compare & pull request**
+3. Add description
+4. Click **Create pull request**
+
+---
+
+## 7. Sync with Latest Code (IMPORTANT)
+
+Before starting work every time:
+
+    git checkout main
+    git pull origin main
+    git checkout your-name-feature
+    git merge main
+
+---
+
+## 8. Handling Conflicts
+
+If conflicts appear:
+
+- Open files
+- Fix manually
+- Then run:
+
+    git add .
+    git commit -m "Resolved merge conflict"
+
+---
+
+## 9. Rollback / Undo Changes
+
+Undo last commit (keep changes):
+
+    git reset --soft HEAD~1
+
+Undo last commit (delete changes):
+
+    git reset --hard HEAD~1
+
+Go to previous commit:
+
+    git log
+    git checkout <commit-id>
+
+---
+
+## 10. Switch Branches
+
+    git checkout branch-name
+
+---
+
+## 11. Delete Branch After Merge
+
+    git branch -d branch-name
+
+---
+
+## Rules (IMPORTANT)
+
+- Do NOT push directly to `main`
+- Always create a branch
+- Pull latest changes before starting
+- Keep commits clean and meaningful
+- Avoid committing unnecessary files
+
+---
+
+## Workflow Summary
+
+    clone → branch → code → commit → push → PR → merge
+
+---
+
+## If Something Breaks
+
+Try:
+
+    git pull origin main
+
+If still stuck, ask before doing random fixes.
