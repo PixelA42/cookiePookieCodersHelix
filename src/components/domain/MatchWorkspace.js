@@ -287,7 +287,7 @@ export default function MatchWorkspace({ mapMode = false }) {
   }, [feedback]);
 
   return (
-    <div style={{ display: "grid", gap: 28 }}>
+    <div className="workspace-page" style={{ gap: 28 }}>
       {/* Header */}
       <div>
         <div
@@ -305,7 +305,7 @@ export default function MatchWorkspace({ mapMode = false }) {
             : "Review compatibility scores based on proximity, temperature fit, and operating schedule overlap. Give feedback to help improve future matches."}
         </p>
         {!mapMode ? (
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Button
               variant="soft"
               disabled={generating}
@@ -323,6 +323,9 @@ export default function MatchWorkspace({ mapMode = false }) {
             >
               {generating ? "Generating…" : "Generate / refresh matches"}
             </Button>
+            <Link href="/dashboard/home">
+              <Button variant="ghost">Open workspace home</Button>
+            </Link>
           </div>
         ) : null}
       </div>

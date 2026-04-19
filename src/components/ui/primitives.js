@@ -3,24 +3,24 @@
 export function Button({ children, variant = "primary", shape = "rounded", style, ...props }) {
   const styles = {
     primary: {
-      background: "var(--primary)",
-      color: "white",
-      border: "1px solid var(--primary)",
+      background: "#181d27",
+      color: "#f7f9fc",
+      border: "1px solid #181d27",
     },
     ghost: {
-      background: "transparent",
-      color: "var(--text)",
-      border: "1px solid var(--border)",
+      background: "#f8fafd",
+      color: "#2a3140",
+      border: "1px solid #dbe1eb",
     },
     soft: {
-      background: "var(--primary-soft)",
-      color: "var(--primary)",
-      border: "1px solid var(--primary-soft)",
+      background: "#eef1f6",
+      color: "#2d3648",
+      border: "1px solid #d7dde8",
     },
     danger: {
-      background: "#fff3f3",
-      color: "var(--bad)",
-      border: "1px solid #ffd7d7",
+      background: "#fff5f5",
+      color: "#ba2f3f",
+      border: "1px solid #ffdce2",
     },
   };
 
@@ -35,7 +35,7 @@ export function Button({ children, variant = "primary", shape = "rounded", style
         fontWeight: 600,
         cursor: "pointer",
         transition: "transform 120ms ease, box-shadow 120ms ease, background 120ms ease",
-        boxShadow: shape === "sharp" ? "var(--shadow-brutal)" : undefined,
+        boxShadow: props.disabled ? "none" : "0 3px 10px rgba(20, 33, 58, 0.06)",
         ...styles[variant],
         ...(props.disabled
           ? {
@@ -64,10 +64,9 @@ export function Input({ shape = "rounded", style, ...props }) {
         width: "100%",
         padding: "10px 12px",
         borderRadius: inputRadius(shape),
-        border: shape === "sharp" ? "2px solid var(--text)" : "1px solid var(--border)",
-        background: "var(--surface)",
+        border: "1px solid #d8dee8",
+        background: "#fff",
         color: "var(--text)",
-        boxShadow: shape === "sharp" ? "3px 3px 0 rgba(19, 23, 34, 0.08)" : undefined,
         ...style,
       }}
     />
@@ -82,10 +81,9 @@ export function Select({ shape = "rounded", style, ...props }) {
         width: "100%",
         padding: "10px 12px",
         borderRadius: inputRadius(shape),
-        border: shape === "sharp" ? "2px solid var(--text)" : "1px solid var(--border)",
-        background: "var(--surface)",
+        border: "1px solid #d8dee8",
+        background: "#fff",
         color: "var(--text)",
-        boxShadow: shape === "sharp" ? "3px 3px 0 rgba(19, 23, 34, 0.08)" : undefined,
         ...style,
       }}
     />
@@ -101,11 +99,10 @@ export function Textarea({ shape = "rounded", style, ...props }) {
         minHeight: 110,
         padding: "10px 12px",
         borderRadius: inputRadius(shape),
-        border: shape === "sharp" ? "2px solid var(--text)" : "1px solid var(--border)",
-        background: "var(--surface)",
+        border: "1px solid #d8dee8",
+        background: "#fff",
         color: "var(--text)",
         resize: "vertical",
-        boxShadow: shape === "sharp" ? "3px 3px 0 rgba(19, 23, 34, 0.08)" : undefined,
         ...style,
       }}
     />
@@ -113,10 +110,7 @@ export function Textarea({ shape = "rounded", style, ...props }) {
 }
 
 export function Card({ children, style, strong = false, variant = "default" }) {
-  const brutal = variant === "brutal";
-  const className = brutal
-    ? `card-brutal${strong ? " card-strong" : ""}`
-    : `card${strong ? " card-strong" : ""}`;
+  const className = `card${strong ? " card-strong" : ""}`;
 
   return (
     <div className={className} style={{ padding: "20px", ...style }}>

@@ -42,7 +42,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 24, maxWidth: 980 }}>
+    <div className="workspace-page" style={{ gap: 24 }}>
       <div>
         <div className="eyebrow" style={{ marginBottom: 10, borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
           Profile / Account
@@ -53,7 +53,7 @@ export default function AccountPage() {
         </p>
       </div>
 
-      <section style={{ border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", padding: 18, display: "grid", gap: 10 }}>
+      <section className="workspace-block" style={{ display: "grid", gap: 10 }}>
         <strong>Profile settings</strong>
         <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
           Organization: {profile?.companyName || "—"}
@@ -77,13 +77,13 @@ export default function AccountPage() {
         </div>
 
         {!history.length ? (
-          <div style={{ border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", padding: 20, color: "var(--text-muted)" }}>
+          <div className="workspace-block" style={{ color: "var(--text-muted)" }}>
             No feedback recorded yet.
           </div>
         ) : (
           <div style={{ display: "grid", gap: 10 }}>
             {history.map((entry) => (
-              <div key={entry.matchId} style={{ border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", padding: 14, display: "grid", gap: 8 }}>
+              <div key={entry.matchId} className="workspace-block" style={{ padding: 14, display: "grid", gap: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                   <strong>{entry.counterpartName || `Match ${entry.matchId}`}</strong>
                   <Badge tone={entry.rating === "useful" ? "good" : "bad"}>{entry.rating}</Badge>

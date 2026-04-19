@@ -121,7 +121,7 @@ export default function MatchDetailPage() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 28, maxWidth: 980 }}>
+    <div className="workspace-page" style={{ gap: 28 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
           <div className="eyebrow" style={{ marginBottom: 10, borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>

@@ -45,7 +45,7 @@ export default function ConnectionsPage() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 22, maxWidth: 980 }}>
+    <div className="workspace-page">
       <div>
         <div className="eyebrow" style={{ marginBottom: 10, borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
           Connections
@@ -57,13 +57,13 @@ export default function ConnectionsPage() {
       </div>
 
       {!items.length ? (
-        <div style={{ border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", padding: 20, color: "var(--text-muted)" }}>
+        <div className="workspace-block" style={{ color: "var(--text-muted)" }}>
           No connection requests yet.
         </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           {items.map((item) => (
-            <div key={item.id} style={{ border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", padding: 16, display: "grid", gap: 10 }}>
+            <div key={item.id} className="workspace-block" style={{ display: "grid", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <strong>{item.counterpart_organization_name}</strong>
                 <Badge tone={tone(item.status)}>{item.status}</Badge>

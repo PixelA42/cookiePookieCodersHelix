@@ -8,87 +8,91 @@ export default function MarketingPage() {
   return (
     <div style={{ display: "grid", gap: 0 }}>
       <section style={{ paddingBottom: 28 }}>
-        <div className="eyebrow eyebrow-brutal" style={{ marginBottom: 16 }}>
-          Industrial heat matching
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gap: 28,
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            alignItems: "start",
-          }}
-        >
-          <div style={{ display: "grid", gap: 18 }}>
-            <h1 style={{ margin: 0, fontSize: "clamp(40px, 7vw, 76px)", lineHeight: 0.95, letterSpacing: "-0.03em" }}>
-              Waste heat,
+        <div className="hero-grid">
+          <div className="reveal-up" style={{ display: "grid", gap: 18 }}>
+            <div className="eyebrow eyebrow-brutal" style={{ marginBottom: 6 }}>
+              AI heat exchange network
+            </div>
+            <h1 className="hero-title">
+              Waste heat.
               <br />
-              <span style={{ color: "var(--accent-heat)" }}>matched.</span>
+              <span className="hero-title-accent">Finds a second life.</span>
             </h1>
-            <p style={{ color: "var(--text-muted)", maxWidth: 560, fontSize: 18, margin: 0, lineHeight: 1.6 }}>
-              Connect producers with surplus heat to nearby consumers who need it—greenhouses, cold storage, district
-              heating. HeatREco ranks partnerships by distance, temperature fit, and schedule overlap so recoverable
-              thermal energy stops evaporating unused.
+            <p className="hero-subcopy">
+              HeatREco links industrial producers and nearby thermal consumers with compatibility scored from distance,
+              temperature fit, and schedule overlap. Factories and data centers stop venting usable heat while
+              greenhouses, cold storage, and district systems recover it as utility.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Link href="/auth/register">
-                <Button shape="sharp">Start matching</Button>
+                <Button shape="sharp">Create facility profile</Button>
               </Link>
               <Link href="/auth/login">
                 <Button variant="ghost" shape="sharp">
-                  Open workspace
+                  Enter dashboard
                 </Button>
               </Link>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Badge tone="primary" shape="tag">
-                Proximity-aware
+                Producer + Consumer roles
               </Badge>
               <Badge tone="good" shape="tag">
-                Temperature fit
+                AI compatibility score
               </Badge>
               <Badge tone="neutral" shape="tag">
-                Schedule overlap
+                REST API /api/v1
               </Badge>
             </div>
           </div>
 
-          <Card variant="brutal" strong style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-              <strong>Compatibility snapshot</strong>
-              <Badge tone="good">92/100</Badge>
-            </div>
-            <div className="grid-auto" style={{ marginTop: 16 }}>
-              <div style={{ padding: 14, border: "2px solid var(--border)", borderRadius: "var(--radius-sharp)", background: "var(--surface-soft)" }}>
-                <strong>Waste heat source</strong>
-                <p style={{ margin: "8px 0 0", color: "var(--text-muted)", fontSize: 14 }}>Food processing · 82°C output</p>
+          <div className="mesh-panel reveal-up delay-1" style={{ minHeight: 360 }}>
+            <div className="mesh-panel-inner">
+              <div className="glass-row">
+                <div>
+                  <strong style={{ fontSize: 14, display: "block" }}>Producer</strong>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Data Center · 84°C surplus</div>
+                </div>
+                <Badge tone="primary">Live</Badge>
               </div>
-              <div style={{ padding: 14, border: "2px solid var(--border)", borderRadius: "var(--radius-sharp)", background: "var(--surface-soft)" }}>
-                <strong>Recovery site</strong>
-                <p style={{ margin: "8px 0 0", color: "var(--text-muted)", fontSize: 14 }}>Greenhouse · 71°C demand</p>
+
+              <div className="glass-row">
+                <div>
+                  <strong style={{ fontSize: 14, display: "block" }}>Consumer</strong>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Greenhouse · 72°C demand</div>
+                </div>
+                <Badge tone="good">8.1km</Badge>
               </div>
+
+              <div className="glass-row">
+                <div>
+                  <strong style={{ fontSize: 14, display: "block" }}>Schedule overlap</strong>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Weekdays 06:00 to 18:00</div>
+                </div>
+                <Badge tone="neutral">Stable</Badge>
+              </div>
+
+              <Card variant="brutal" strong style={{ marginTop: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  <strong>AI compatibility</strong>
+                  <Badge tone="good">93 / 100</Badge>
+                </div>
+                <p style={{ margin: "10px 0 0", color: "var(--text-muted)", fontSize: 13 }}>
+                  Ranked high due to short route feasibility, thermal range overlap, and aligned operating windows.
+                </p>
+              </Card>
             </div>
-            <div
-              style={{
-                marginTop: 16,
-                padding: 14,
-                border: "2px dashed var(--border-strong)",
-                borderRadius: "var(--radius-sharp)",
-              }}
-            >
-              <strong>Why this pairing works</strong>
-              <p style={{ margin: "8px 0 0", color: "var(--text-muted)", fontSize: 14 }}>
-                Short pipe distance, strong temperature overlap, steady weekday schedules.
-              </p>
+            <div className="floating-note">
+              Feedback status: 16 useful votes this month are improving recommendation precision.
             </div>
-          </Card>
+          </div>
         </div>
       </section>
 
       <MarqueeStrip />
 
       <section style={{ padding: "48px 0 32px" }}>
-        <h2 className="section-title">What makes a viable match</h2>
+        <h2 className="section-title reveal-up">What makes a viable match</h2>
         <p className="section-copy" style={{ maxWidth: 640, marginBottom: 24 }}>
           Scroll the highlights or use arrow keys when focused — same signals the workspace uses to rank partners.
         </p>
@@ -96,50 +100,56 @@ export default function MarketingPage() {
       </section>
 
       <section className="band-accent" style={{ margin: "0 -8px", padding: "36px 24px", borderRadius: "var(--radius-sharp)" }}>
-        <h2 className="section-title">Why it works</h2>
+        <h2 className="section-title">Built from product requirements</h2>
         <div className="grid-auto" style={{ marginTop: 20 }}>
           <Card variant="brutal" style={{ background: "var(--surface)" }}>
-            <h3 style={{ marginTop: 0 }}>Proximity aware</h3>
-            <p style={{ color: "var(--text-muted)", marginBottom: 0 }}>Prioritizes feasible pipe distances for practical delivery.</p>
+            <h3 style={{ marginTop: 0 }}>Profile submission</h3>
+            <p style={{ color: "var(--text-muted)", marginBottom: 0 }}>
+              Role-aware forms capture location, temperature, output or demand, and operating schedule.
+            </p>
           </Card>
           <Card variant="brutal" style={{ background: "var(--surface)" }}>
-            <h3 style={{ marginTop: 0 }}>Thermal compatibility</h3>
-            <p style={{ color: "var(--text-muted)", marginBottom: 0 }}>Aligns temperature ranges to limit conversion losses.</p>
+            <h3 style={{ marginTop: 0 }}>AI-driven ranking</h3>
+            <p style={{ color: "var(--text-muted)", marginBottom: 0 }}>
+              Match recommendations are scored and ordered by model-driven compatibility from all available signals.
+            </p>
           </Card>
           <Card variant="brutal" style={{ background: "var(--surface)" }}>
-            <h3 style={{ marginTop: 0 }}>Schedule alignment</h3>
-            <p style={{ color: "var(--text-muted)", marginBottom: 0 }}>Surfaces overlap windows for stable exchange planning.</p>
+            <h3 style={{ marginTop: 0 }}>Feedback loop</h3>
+            <p style={{ color: "var(--text-muted)", marginBottom: 0 }}>
+              Useful and not useful responses feed training data so future pair quality improves over time.
+            </p>
           </Card>
         </div>
       </section>
 
       <section style={{ padding: "40px 0 24px" }}>
-        <h2 className="section-title">How it works</h2>
+        <h2 className="section-title">Core flow</h2>
         <div className="grid-auto">
           <Card>
-            <strong>1. Create account</strong>
-            <p style={{ color: "var(--text-muted)" }}>Register as a heat source or recovery site and verify your email.</p>
+            <strong>1. Register and verify</strong>
+            <p style={{ color: "var(--text-muted)" }}>Create producer or consumer account, then activate with OTP verification.</p>
           </Card>
           <Card>
-            <strong>2. Facility profile</strong>
-            <p style={{ color: "var(--text-muted)" }}>Describe location, temperatures, capacity, and operating schedule.</p>
+            <strong>2. Submit facility profile</strong>
+            <p style={{ color: "var(--text-muted)" }}>Provide thermal profile fields required to calculate compatibility and distance feasibility.</p>
           </Card>
           <Card>
-            <strong>3. Ranked matches</strong>
-            <p style={{ color: "var(--text-muted)" }}>Review scores, open the map view, and send feedback on each lead.</p>
+            <strong>3. Operate in dashboard</strong>
+            <p style={{ color: "var(--text-muted)" }}>Review ranked matches, inspect map context, and submit feedback to retrain recommendations.</p>
           </Card>
         </div>
       </section>
 
       <section className="band-trust" style={{ padding: "36px 24px", borderRadius: "var(--radius-sharp)" }}>
         <h2 className="section-title" style={{ color: "inherit" }}>
-          Security and trust
+          Security baseline
         </h2>
         <div className="grid-auto" style={{ marginTop: 8 }}>
           <div>
             <h3 style={{ marginTop: 0, fontSize: 16 }}>Authenticated API</h3>
             <p style={{ color: "rgba(244,246,251,0.82)", marginBottom: 0, fontSize: 15, lineHeight: 1.55 }}>
-              Facility data and match lists use HTTPS with JWT bearer tokens; keep credentials off shared channels.
+              Protected endpoints use token authentication, and all critical data actions stay behind authorized requests.
             </p>
           </div>
           <div>
@@ -158,7 +168,7 @@ export default function MarketingPage() {
       </section>
 
       <section style={{ padding: "40px 0 8px" }}>
-        <h2 className="section-title">Directional metrics</h2>
+        <h2 className="section-title">Platform pillars</h2>
         <div
           style={{
             display: "grid",
@@ -168,9 +178,9 @@ export default function MarketingPage() {
           }}
         >
           {[
-            { k: "3", d: "Inputs combined", s: "Distance, temperature compatibility, and schedule overlap into one ranked score." },
-            { k: "2", d: "Roles", s: "Waste heat source and recovery site onboarding with role-specific fields." },
-            { k: "1", d: "Workspace", s: "Landing through auth, onboarding, dashboard, map, and feedback in one flow." },
+            { k: "01", d: "AI Matchmaking", s: "Model ranks producer and consumer pairs and returns compatibility out of 100." },
+            { k: "02", d: "Map + Dashboard", s: "Ranked list and geographic view support technical screening and outreach workflows." },
+            { k: "03", d: "Learning Feedback", s: "User feedback captures outcomes that improve recommendation behavior over time." },
           ].map((item) => (
             <div
               key={item.k}

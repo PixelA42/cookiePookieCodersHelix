@@ -19,7 +19,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ display: "grid", gap: 12, maxWidth: 400 }}>
+      <div className="workspace-page" style={{ maxWidth: 400 }}>
         <div className="eyebrow" style={{ width: "fit-content", borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
           Profile
         </div>

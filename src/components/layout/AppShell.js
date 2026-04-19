@@ -1,21 +1,34 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 
+const TITLES = {
+  "/dashboard/home": "Workspace Home",
+  "/dashboard": "Match Dashboard",
+  "/dashboard/map": "Map View",
+  "/profile": "My Facility",
+  "/connections": "Connections",
+  "/account": "Profile & Account",
+};
+
 export default function AppShell({ children }) {
+  const pathname = usePathname();
+  const title = TITLES[pathname] || "HeatREco Workspace";
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="workspace-root">
       <Sidebar />
-      <main
-        style={{
-          flex: 1,
-          marginLeft: 260,
-          background:
-            "linear-gradient(165deg, hsl(228 35% 98.5%) 0%, hsl(210 28% 97%) 45%, rgba(47, 97, 255, 0.03) 100%)",
-          borderLeft: "1px solid var(--border)",
-        }}
-      >
-        <div className="container" style={{ padding: "36px 28px", maxWidth: "1400px", margin: "0 auto" }}>
+      <main className="workspace-main">
+        <header className="workspace-topbar">
+          <div className="workspace-topbar-inner">
+            <div>
+              <p className="workspace-kicker">HeatREco</p>
+              <h1 className="workspace-heading">{title}</h1>
+            </div>
+          </div>
+        </header>
+        <div className="workspace-content">
           {children}
         </div>
       </main>

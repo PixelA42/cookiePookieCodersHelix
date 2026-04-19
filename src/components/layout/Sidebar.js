@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Badge, Button } from "@/components/ui/primitives";
 import { clearToken } from "@/lib/auth";
 import { getProfile } from "@/lib/profileStorage";
@@ -14,6 +15,16 @@ function IconDashboard() {
       <rect x="13" y="3" width="8" height="5" rx="1.5" />
       <rect x="13" y="10" width="8" height="11" rx="1.5" />
       <rect x="3" y="13" width="8" height="8" rx="1.5" />
+    </svg>
+  );
+}
+
+function IconHomeFlow() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M3 10.5L12 3l9 7.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 9.5V21h13V9.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 21v-6h4v6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -68,6 +79,7 @@ function IconOut() {
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const profile = typeof window === "undefined" ? null : getProfile();
   const roleLabel = profile?.role === "producer" || profile?.role === "heat-source" ? "Producer" : "Consumer";
 
@@ -77,6 +89,7 @@ export default function Sidebar() {
   };
 
   const navItems = [
+    { href: "/dashboard/home", label: "Workspace Home", icon: IconHomeFlow },
     { href: "/dashboard", label: "Dashboard", icon: IconDashboard },
     { href: "/profile", label: "My Facility", icon: IconUser },
     { href: "/dashboard/map", label: "Map View", icon: IconMap },
@@ -85,53 +98,33 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside
-      style={{
-        width: 260,
-        borderRight: "2px solid var(--border-strong)",
-        background: "linear-gradient(180deg, var(--surface) 0%, var(--surface-soft) 100%)",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        position: "fixed",
-        left: 0,
-        top: 0,
-        zIndex: 20,
-        boxShadow: "4px 0 0 rgba(19, 23, 34, 0.04)",
-      }}
-    >
-      <div style={{ padding: "22px 16px", borderBottom: "1px solid var(--border)" }}>
-        <Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "var(--radius-sharp)",
-              background: "var(--primary)",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 800,
-              fontSize: 14,
-              letterSpacing: "-0.02em",
-              boxShadow: "var(--shadow-brutal)",
-            }}
-          >
-            H
-          </div>
+    <aside className="workspace-sidebar">
+      <div className="workspace-logo">
+        <Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 11 }}>
+          <div className="workspace-logo-chip">H</div>
           <div>
             <strong style={{ color: "var(--text)", display: "block", fontSize: 15 }}>HeatREco</strong>
-            {profile?.role && (
-              <Badge tone="primary" style={{ marginTop: 4, display: "inline-block", fontSize: 10 }}>
+            {profile?.role ? (
+              <Badge tone="primary" shape="tag" style={{ marginTop: 4, display: "inline-block", fontSize: 10 }}>
                 {roleLabel}
               </Badge>
-            )}
+            ) : null}
           </div>
         </Link>
+        <Button
+          type="button"
+          variant="ghost"
+          className="workspace-menu-toggle"
+          style={{ minWidth: 42, minHeight: 36, padding: "6px 10px" }}
+          onClick={() => setOpen((prev) => !prev)}
+          aria-expanded={open}
+          aria-label="Toggle navigation"
+        >
+          {open ? "Close" : "Menu"}
+        </Button>
       </div>
 
-      <nav style={{ flex: 1, padding: "14px 12px", display: "flex", flexDirection: "column", gap: 6 }} aria-label="Workspace">
+      <nav className={`workspace-nav${open ? " is-open" : ""}`} aria-label="Workspace">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
@@ -139,19 +132,8 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "10px 12px",
-                borderRadius: "var(--radius-sharp)",
-                textDecoration: "none",
-                border: isActive ? "2px solid var(--primary)" : "2px solid transparent",
-                background: isActive ? "var(--primary-soft)" : "transparent",
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? "var(--primary-strong)" : "var(--text)",
-                transition: "background 120ms ease, border-color 120ms ease",
-              }}
+              className={`workspace-nav-link${isActive ? " is-active" : ""}`}
+              onClick={() => setOpen(false)}
             >
               <span style={{ display: "flex", opacity: isActive ? 1 : 0.85 }}>
                 <Icon />
@@ -162,7 +144,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div style={{ padding: "14px 12px", borderTop: "1px solid var(--border)" }}>
+      <div className="workspace-sidebar-footer">
         <Button
           variant="ghost"
           onClick={onLogout}
