@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import or_, select
+from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import ConsumerProfile, Match, ProducerProfile, User, UserRole
@@ -14,10 +15,16 @@ from app.schemas import (
 from app.services.ml_adapter import fetch_recommendations_for_user, score_match_candidates
 
 
+def _user_id(user: User) -> int:
+    identity = inspect(user).identity
+    return int(identity[0]) if identity else int(user.id)
+
+
 def list_matches_for_user(db: Session, user: User) -> MatchListResponse:
+    user_id = _user_id(user)
     stmt = (
         select(Match)
-        .where(or_(Match.producer_user_id == user.id, Match.consumer_user_id == user.id))
+        .where(or_(Match.producer_user_id == user_id, Match.consumer_user_id == user_id))
         .options(joinedload(Match.producer_user), joinedload(Match.consumer_user))
         .order_by(Match.generated_at.desc().nullslast(), Match.id.desc())
     )
@@ -29,8 +36,8 @@ def list_matches_for_user(db: Session, user: User) -> MatchListResponse:
 
     cards: list[MatchCardResponse] = []
     for match in matches:
-        counterpart = match.consumer_user if user.id == match.producer_user_id else match.producer_user
-        counterpart_role = UserRole.consumer if user.id == match.producer_user_id else UserRole.producer
+        counterpart = match.consumer_user if user_id == match.producer_user_id else match.producer_user
+        counterpart_role = UserRole.consumer if user_id == match.producer_user_id else UserRole.producer
         cards.append(
             MatchCardResponse(
                 match_id=match.id,
@@ -47,11 +54,12 @@ def list_matches_for_user(db: Session, user: User) -> MatchListResponse:
 
 
 def get_match_detail_for_user(db: Session, user: User, match_id: int) -> MatchDetailResponse | None:
+    user_id = _user_id(user)
     stmt = (
         select(Match)
         .where(
             Match.id == match_id,
-            or_(Match.producer_user_id == user.id, Match.consumer_user_id == user.id),
+            or_(Match.producer_user_id == user_id, Match.consumer_user_id == user_id),
         )
         .options(
             joinedload(Match.producer_user).joinedload(User.producer_profile),
@@ -104,24 +112,26 @@ def generate_matches_for_user(db: Session, user: User, max_candidates: int) -> G
 
 
 def _build_candidates_for_user(db: Session, user: User, max_candidates: int) -> list[dict]:
+    user_id = _user_id(user)
+    user_role = db.execute(select(User.role).where(User.id == user_id)).scalars().first() or user.role
     candidates: list[dict] = []
-    if user.role == UserRole.producer:
+    if user_role == UserRole.producer:
         producer_profile = db.execute(
-            select(ProducerProfile).where(ProducerProfile.user_id == user.id)
+            select(ProducerProfile).where(ProducerProfile.user_id == user_id)
         ).scalars().first()
         if not producer_profile:
             return []
         stmt = (
             select(ConsumerProfile)
             .join(User, ConsumerProfile.user_id == User.id)
-            .where(User.is_email_verified.is_(True), ConsumerProfile.user_id != user.id)
+            .where(User.is_email_verified.is_(True), ConsumerProfile.user_id != user_id)
             .limit(max_candidates)
         )
         consumers = db.execute(stmt).scalars().all()
         for consumer in consumers:
             candidates.append(
                 {
-                    "producer_user_id": user.id,
+                    "producer_user_id": user_id,
                     "consumer_user_id": consumer.user_id,
                     "producer": {
                         "latitude": producer_profile.latitude,
@@ -142,7 +152,7 @@ def _build_candidates_for_user(db: Session, user: User, max_candidates: int) -> 
         return candidates
 
     consumer_profile = db.execute(
-        select(ConsumerProfile).where(ConsumerProfile.user_id == user.id)
+        select(ConsumerProfile).where(ConsumerProfile.user_id == user_id)
     ).scalars().first()
     if not consumer_profile:
         return []
@@ -150,7 +160,7 @@ def _build_candidates_for_user(db: Session, user: User, max_candidates: int) -> 
     stmt = (
         select(ProducerProfile)
         .join(User, ProducerProfile.user_id == User.id)
-        .where(User.is_email_verified.is_(True), ProducerProfile.user_id != user.id)
+        .where(User.is_email_verified.is_(True), ProducerProfile.user_id != user_id)
         .limit(max_candidates)
     )
     producers = db.execute(stmt).scalars().all()
@@ -158,7 +168,7 @@ def _build_candidates_for_user(db: Session, user: User, max_candidates: int) -> 
         candidates.append(
             {
                 "producer_user_id": producer.user_id,
-                "consumer_user_id": user.id,
+                "consumer_user_id": user_id,
                 "producer": {
                     "latitude": producer.latitude,
                     "longitude": producer.longitude,
@@ -221,6 +231,8 @@ def _producer_summary(profile: ProducerProfile | None) -> ProfileSummaryResponse
         latitude=profile.latitude,
         longitude=profile.longitude,
         schedule_description=profile.schedule_description,
+        supply_temperature_c=profile.supply_temperature_c,
+        heat_output_kw=profile.heat_output_kw,
     )
 
 
@@ -232,4 +244,6 @@ def _consumer_summary(profile: ConsumerProfile | None) -> ProfileSummaryResponse
         latitude=profile.latitude,
         longitude=profile.longitude,
         schedule_description=profile.schedule_description,
+        demand_temperature_c=profile.demand_temperature_c,
+        flow_rate_lph=profile.flow_rate_lph,
     )

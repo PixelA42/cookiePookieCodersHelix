@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field
 
-from app.models import FeedbackLabel, UserRole
+from datetime import datetime
+
+from app.models import ConnectionStatus, FeedbackLabel, UserRole
 
 
 class RegisterRequest(BaseModel):
@@ -126,6 +128,10 @@ class ProfileSummaryResponse(BaseModel):
     latitude: float
     longitude: float
     schedule_description: str
+    supply_temperature_c: float | None = None
+    heat_output_kw: float | None = None
+    demand_temperature_c: float | None = None
+    flow_rate_lph: float | None = None
 
 
 class MatchDetailResponse(BaseModel):
@@ -148,5 +154,51 @@ class FeedbackResponse(BaseModel):
     match_id: int
     user_id: int
     feedback_label: FeedbackLabel
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class FeedbackHistoryItem(BaseModel):
+    id: int
+    match_id: int
+    user_id: int
+    feedback_label: FeedbackLabel
+    counterpart_organization_name: str
+    compatibility_score: float | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class FeedbackHistoryResponse(BaseModel):
+    items: list[FeedbackHistoryItem]
+
+
+class ConnectionRequestCreateRequest(BaseModel):
+    match_id: int = Field(gt=0)
+    message: str | None = Field(default=None, max_length=500)
+
+
+class ConnectionRequestStatusUpdateRequest(BaseModel):
+    status: ConnectionStatus
+
+
+class ConnectionRequestResponse(BaseModel):
+    id: int
+    match_id: int
+    requester_user_id: int
+    counterpart_user_id: int
+    counterpart_organization_name: str
+    status: ConnectionStatus
+    message: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ConnectionRequestListResponse(BaseModel):
+    items: list[ConnectionRequestResponse]

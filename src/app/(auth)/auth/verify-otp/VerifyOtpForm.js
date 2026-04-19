@@ -6,8 +6,6 @@ import { useMemo, useState } from "react";
 import AuthCard from "@/components/layout/AuthCard";
 import { Button, Field, Input } from "@/components/ui/primitives";
 import { authApi } from "@/lib/api/client";
-import { setAuthSession } from "@/lib/auth";
-
 export default function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,10 +24,9 @@ export default function VerifyOtpForm() {
     setMessage("");
 
     try {
-      const response = await authApi.verifyOtp({ email, otp });
-      const token = response.access_token || response.token || "";
-      setAuthSession({ token, user: response.user || { email } });
-      router.push("/onboarding");
+      await authApi.verifyOtp({ email, otp_code: otp });
+      setMessage("Email verified. You can log in.");
+      router.push("/auth/login");
     } catch (submissionError) {
       setError(submissionError.message || "Verification failed");
     } finally {

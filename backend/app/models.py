@@ -17,6 +17,12 @@ class FeedbackLabel(str, Enum):
     not_useful = "not_useful"
 
 
+class ConnectionStatus(str, Enum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -51,6 +57,18 @@ class User(Base):
     )
     match_feedback: Mapped[list["MatchFeedback"]] = relationship(
         "MatchFeedback", back_populates="user", cascade="all, delete-orphan"
+    )
+    connections_requested: Mapped[list["ConnectionRequest"]] = relationship(
+        "ConnectionRequest",
+        foreign_keys="ConnectionRequest.requester_user_id",
+        back_populates="requester_user",
+        cascade="all, delete-orphan",
+    )
+    connections_received: Mapped[list["ConnectionRequest"]] = relationship(
+        "ConnectionRequest",
+        foreign_keys="ConnectionRequest.counterpart_user_id",
+        back_populates="counterpart_user",
+        cascade="all, delete-orphan",
     )
 
 
@@ -167,3 +185,34 @@ class MatchFeedback(Base):
 
     match: Mapped[Match] = relationship("Match", back_populates="feedback_entries")
     user: Mapped[User] = relationship("User", back_populates="match_feedback")
+
+
+class ConnectionRequest(Base):
+    __tablename__ = "connection_requests"
+    __table_args__ = (
+        UniqueConstraint("match_id", "requester_user_id", "counterpart_user_id", name="uq_connection_request_triplet"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    match_id: Mapped[int] = mapped_column(ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
+    requester_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    counterpart_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[ConnectionStatus] = mapped_column(
+        SqlEnum(ConnectionStatus, name="connection_status"), default=ConnectionStatus.pending, nullable=False
+    )
+    message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    match: Mapped[Match] = relationship("Match")
+    requester_user: Mapped[User] = relationship(
+        "User", foreign_keys=[requester_user_id], back_populates="connections_requested"
+    )
+    counterpart_user: Mapped[User] = relationship(
+        "User", foreign_keys=[counterpart_user_id], back_populates="connections_received"
+    )

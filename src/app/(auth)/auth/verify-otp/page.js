@@ -5,9 +5,7 @@ export default function VerifyOtpPage() {
   return (
     <Suspense
       fallback={
-        <div className="container" style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "32px 0" }}>
-          <p style={{ color: "var(--text-muted)" }}>Loading…</p>
-        </div>
+        <p style={{ color: "var(--text-muted)", textAlign: "center", padding: 24 }}>Loading…</p>
       }
     >
       <VerifyOtpForm />

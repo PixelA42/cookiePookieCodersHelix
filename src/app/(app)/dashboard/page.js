@@ -1,3 +1,5 @@
+"use client";
+
 import MatchWorkspace from "@/components/domain/MatchWorkspace";
 
 export default function DashboardPage() {

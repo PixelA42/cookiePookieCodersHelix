@@ -10,9 +10,9 @@ import { authApi } from "@/lib/api/client";
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
+    organization_name: "",
     email: "",
     password: "",
-    full_name: "",
     role: "producer",
   });
   const [busy, setBusy] = useState(false);
@@ -28,7 +28,12 @@ export default function RegisterPage() {
     setMessage("");
 
     try {
-      await authApi.register(form);
+      await authApi.register({
+        organization_name: form.organization_name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        role: form.role,
+      });
       setMessage("Registration submitted. Check your email for the OTP code.");
       router.push(`/auth/verify-otp?email=${encodeURIComponent(form.email)}`);
     } catch (submissionError) {
@@ -41,8 +46,13 @@ export default function RegisterPage() {
   return (
     <AuthCard title="Create your HeatREco account" subtitle="Register as a producer or consumer, then verify your email to continue.">
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 14 }}>
-        <Field label="Full name">
-          <Input value={form.full_name} onChange={(event) => update("full_name", event.target.value)} required />
+        <Field label="Organization name">
+          <Input
+            value={form.organization_name}
+            onChange={(event) => update("organization_name", event.target.value)}
+            required
+            minLength={2}
+          />
         </Field>
         <Field label="Email">
           <Input type="email" value={form.email} onChange={(event) => update("email", event.target.value)} required />

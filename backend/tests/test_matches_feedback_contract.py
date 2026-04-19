@@ -184,12 +184,16 @@ def test_generation_returns_model_unavailable_when_ml_not_connected() -> None:
 
 def test_generation_success_and_upsert_no_duplicates() -> None:
     _reset_db()
+    producer_id = 0
+    consumer_id = 0
     with SessionLocal() as db:
         producer = _create_user(db, "producer-upsert@test.com", UserRole.producer)
         consumer = _create_user(db, "consumer-upsert@test.com", UserRole.consumer)
+        producer_id = producer.id
+        consumer_id = consumer.id
         db.add(
             ProducerProfile(
-                user_id=producer.id,
+                user_id=producer_id,
                 facility_name="P2",
                 latitude=10,
                 longitude=20,
@@ -200,7 +204,7 @@ def test_generation_success_and_upsert_no_duplicates() -> None:
         )
         db.add(
             ConsumerProfile(
-                user_id=consumer.id,
+                user_id=consumer_id,
                 facility_name="C2",
                 latitude=12,
                 longitude=22,
@@ -221,8 +225,8 @@ def test_generation_success_and_upsert_no_duplicates() -> None:
             "model_version": "ml-v1",
             "scores": [
                 {
-                    "producer_user_id": producer.id,
-                    "consumer_user_id": consumer.id,
+                        "producer_user_id": producer_id,
+                        "consumer_user_id": consumer_id,
                     "compatibility_score": 81.0,
                 }
             ],
@@ -245,8 +249,8 @@ def test_generation_success_and_upsert_no_duplicates() -> None:
                 "model_version": "ml-v2",
                 "scores": [
                     {
-                        "producer_user_id": producer.id,
-                        "consumer_user_id": consumer.id,
+                        "producer_user_id": producer_id,
+                        "consumer_user_id": consumer_id,
                         "compatibility_score": 88.0,
                     }
                 ],
@@ -259,7 +263,7 @@ def test_generation_success_and_upsert_no_duplicates() -> None:
         assert second.json()["updated_count"] == 1
 
         with SessionLocal() as db:
-            rows = db.query(Match).filter_by(producer_user_id=producer.id, consumer_user_id=consumer.id).all()
+            rows = db.query(Match).filter_by(producer_user_id=producer_id, consumer_user_id=consumer_id).all()
             assert len(rows) == 1
             assert rows[0].compatibility_score == 88.0
             assert rows[0].model_version == "ml-v2"

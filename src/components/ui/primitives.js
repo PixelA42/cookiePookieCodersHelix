@@ -1,6 +1,6 @@
 "use client";
 
-export function Button({ children, variant = "primary", ...props }) {
+export function Button({ children, variant = "primary", shape = "rounded", style, ...props }) {
   const styles = {
     primary: {
       background: "var(--primary)",
@@ -24,22 +24,27 @@ export function Button({ children, variant = "primary", ...props }) {
     },
   };
 
+  const radius = shape === "sharp" ? "var(--radius-sharp)" : "10px";
+
   return (
     <button
       {...props}
       style={{
         padding: "10px 14px",
-        borderRadius: "10px",
+        borderRadius: radius,
         fontWeight: 600,
         cursor: "pointer",
         transition: "transform 120ms ease, box-shadow 120ms ease, background 120ms ease",
+        boxShadow: shape === "sharp" ? "var(--shadow-brutal)" : undefined,
         ...styles[variant],
         ...(props.disabled
           ? {
               opacity: 0.6,
               cursor: "not-allowed",
+              boxShadow: "none",
             }
           : {}),
+        ...style,
       }}
     >
       {children}
@@ -47,39 +52,47 @@ export function Button({ children, variant = "primary", ...props }) {
   );
 }
 
-export function Input(props) {
+function inputRadius(shape) {
+  return shape === "sharp" ? "var(--radius-sharp)" : "10px";
+}
+
+export function Input({ shape = "rounded", style, ...props }) {
   return (
     <input
       {...props}
       style={{
         width: "100%",
         padding: "10px 12px",
-        borderRadius: "10px",
-        border: "1px solid var(--border)",
+        borderRadius: inputRadius(shape),
+        border: shape === "sharp" ? "2px solid var(--text)" : "1px solid var(--border)",
         background: "var(--surface)",
         color: "var(--text)",
+        boxShadow: shape === "sharp" ? "3px 3px 0 rgba(19, 23, 34, 0.08)" : undefined,
+        ...style,
       }}
     />
   );
 }
 
-export function Select(props) {
+export function Select({ shape = "rounded", style, ...props }) {
   return (
     <select
       {...props}
       style={{
         width: "100%",
         padding: "10px 12px",
-        borderRadius: "10px",
-        border: "1px solid var(--border)",
+        borderRadius: inputRadius(shape),
+        border: shape === "sharp" ? "2px solid var(--text)" : "1px solid var(--border)",
         background: "var(--surface)",
         color: "var(--text)",
+        boxShadow: shape === "sharp" ? "3px 3px 0 rgba(19, 23, 34, 0.08)" : undefined,
+        ...style,
       }}
     />
   );
 }
 
-export function Textarea(props) {
+export function Textarea({ shape = "rounded", style, ...props }) {
   return (
     <textarea
       {...props}
@@ -87,26 +100,32 @@ export function Textarea(props) {
         width: "100%",
         minHeight: 110,
         padding: "10px 12px",
-        borderRadius: "10px",
-        border: "1px solid var(--border)",
+        borderRadius: inputRadius(shape),
+        border: shape === "sharp" ? "2px solid var(--text)" : "1px solid var(--border)",
         background: "var(--surface)",
         color: "var(--text)",
         resize: "vertical",
-        ...props.style,
+        boxShadow: shape === "sharp" ? "3px 3px 0 rgba(19, 23, 34, 0.08)" : undefined,
+        ...style,
       }}
     />
   );
 }
 
-export function Card({ children, style, strong = false }) {
+export function Card({ children, style, strong = false, variant = "default" }) {
+  const brutal = variant === "brutal";
+  const className = brutal
+    ? `card-brutal${strong ? " card-strong" : ""}`
+    : `card${strong ? " card-strong" : ""}`;
+
   return (
-    <div className={`card${strong ? " card-strong" : ""}`} style={{ padding: "20px", ...style }}>
+    <div className={className} style={{ padding: "20px", ...style }}>
       {children}
     </div>
   );
 }
 
-export function Badge({ children, tone = "neutral" }) {
+export function Badge({ children, tone = "neutral", shape = "pill", style, ...props }) {
   const tones = {
     neutral: { background: "var(--surface-soft)", color: "var(--text-muted)" },
     good: { background: "#e8f8ef", color: "var(--good)" },
@@ -114,14 +133,26 @@ export function Badge({ children, tone = "neutral" }) {
     primary: { background: "var(--primary-soft)", color: "var(--primary)" },
   };
 
+  const borderRadius = shape === "tag" ? "var(--radius-sharp)" : "999px";
+  const border =
+    shape === "tag"
+      ? {
+          border: "1px solid var(--border-strong)",
+          boxShadow: "2px 2px 0 rgba(19, 23, 34, 0.06)",
+        }
+      : {};
+
   return (
     <span
+      {...props}
       style={{
-        padding: "4px 8px",
-        borderRadius: "999px",
+        padding: shape === "tag" ? "4px 10px" : "4px 8px",
+        borderRadius,
         fontSize: "12px",
         fontWeight: 600,
         ...tones[tone],
+        ...border,
+        ...style,
       }}
     >
       {children}
@@ -139,6 +170,6 @@ export function Field({ label, hint, children }) {
   );
 }
 
-export function Divider() {
-  return <div style={{ height: 1, background: "var(--border)", width: "100%" }} />;
+export function Divider({ style, ...props }) {
+  return <div {...props} style={{ height: 1, background: "var(--border)", width: "100%", ...style }} />;
 }
