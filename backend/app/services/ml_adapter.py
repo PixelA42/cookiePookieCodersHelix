@@ -80,7 +80,14 @@ def score_match_candidates(
         {
           "producer_user_id": 1,
           "consumer_user_id": 2,
-          "compatibility_score": 82.5
+                    "compatibility_score": 82.5,
+                    "confidence_score": 0.91,
+                    "component_scores": {
+                        "proximity_score": 72.0,
+                        "temperature_fit_score": 100.0,
+                        "volume_fit_score": 81.0,
+                        "schedule_fit_score": 88.0
+                    }
         }
       ]
     }
@@ -121,11 +128,24 @@ def score_match_candidates(
             if not isinstance(item, dict):
                 continue
             try:
+                component_scores = item.get("component_scores")
+                normalized_component_scores = None
+                if isinstance(component_scores, dict):
+                    normalized_component_scores = {
+                        "proximity_score": float(component_scores["proximity_score"]),
+                        "temperature_fit_score": float(component_scores["temperature_fit_score"]),
+                        "volume_fit_score": float(component_scores["volume_fit_score"]),
+                        "schedule_fit_score": float(component_scores["schedule_fit_score"]),
+                    }
+
+                confidence_score = item.get("confidence_score")
                 normalized_scores.append(
                     {
                         "producer_user_id": int(item["producer_user_id"]),
                         "consumer_user_id": int(item["consumer_user_id"]),
                         "compatibility_score": float(item["compatibility_score"]),
+                        "confidence_score": float(confidence_score) if confidence_score is not None else None,
+                        "component_scores": normalized_component_scores,
                     }
                 )
             except (KeyError, TypeError, ValueError):

@@ -6,12 +6,14 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models import ConsumerProfile, Match, MatchFeedback, ProducerProfile, User, UserRole
 from app.schemas import (
+    ComponentScoresResponse,
     GenerateMatchesResponse,
     MatchCardResponse,
     MatchDetailResponse,
     MatchListResponse,
     ProfileSummaryResponse,
 )
+from app.services.ml_adapter import calculate_compatibility_score
 from app.services.ml_adapter import fetch_recommendations_for_user, score_match_candidates
 from app.services.geo_utils import haversine_km
 
@@ -25,23 +27,28 @@ def _user_id(user: User) -> int:
 
 def list_matches_for_user(db: Session, user: User) -> MatchListResponse:
     user_id = _user_id(user)
-    candidates = _build_candidates_for_user(db, user, max_candidates=1000)
-    local_scores = _score_candidates_locally(candidates)
-    if local_scores:
-        _upsert_match_scores(
-            db,
-            scores=local_scores,
-            model_version="local-haversine-v1",
-            integration_state="local_rules",
-        )
-
     stmt = (
         select(Match)
         .where(or_(Match.producer_user_id == user_id, Match.consumer_user_id == user_id))
-        .options(joinedload(Match.producer_user), joinedload(Match.consumer_user))
+        .options(
+            joinedload(Match.producer_user).joinedload(User.producer_profile),
+            joinedload(Match.consumer_user).joinedload(User.consumer_profile),
+        )
         .order_by(Match.compatibility_score.desc().nullslast(), Match.generated_at.desc().nullslast(), Match.id.desc())
     )
     matches = db.execute(stmt).scalars().all()
+
+    if not matches:
+        candidates = _build_candidates_for_user(db, user, max_candidates=1000)
+        local_scores = _score_candidates_locally(candidates)
+        if local_scores:
+            _upsert_match_scores(
+                db,
+                scores=local_scores,
+                model_version="local-haversine-v1",
+                integration_state="local_rules",
+            )
+            matches = db.execute(stmt).scalars().all()
 
     if not matches:
         fallback = fetch_recommendations_for_user(user)
@@ -51,6 +58,10 @@ def list_matches_for_user(db: Session, user: User) -> MatchListResponse:
     for match in matches:
         counterpart = match.consumer_user if user_id == match.producer_user_id else match.producer_user
         counterpart_role = UserRole.consumer if user_id == match.producer_user_id else UserRole.producer
+        component_scores = _component_scores_from_profiles(
+            match.producer_user.producer_profile,
+            match.consumer_user.consumer_profile,
+        )
         cards.append(
             MatchCardResponse(
                 match_id=match.id,
@@ -58,6 +69,8 @@ def list_matches_for_user(db: Session, user: User) -> MatchListResponse:
                 counterpart_organization_name=counterpart.organization_name,
                 counterpart_role=counterpart_role,
                 compatibility_score=match.compatibility_score,
+                component_scores=component_scores,
+                confidence_score=_confidence_score_from_state(match.integration_state),
                 integration_state=match.integration_state,
                 model_version=match.model_version,
             )
@@ -91,6 +104,11 @@ def get_match_detail_for_user(db: Session, user: User, match_id: int) -> MatchDe
         producer_user_id=match.producer_user_id,
         consumer_user_id=match.consumer_user_id,
         compatibility_score=match.compatibility_score,
+        component_scores=_component_scores_from_profiles(
+            match.producer_user.producer_profile,
+            match.consumer_user.consumer_profile,
+        ),
+        confidence_score=_confidence_score_from_state(match.integration_state),
         integration_state=match.integration_state,
         model_version=match.model_version,
         producer_profile=producer_profile,
@@ -382,3 +400,47 @@ def _consumer_summary(profile: ConsumerProfile | None) -> ProfileSummaryResponse
         demand_temperature_c=profile.demand_temperature_c,
         flow_rate_lph=profile.flow_rate_lph,
     )
+
+
+def _component_scores_from_profiles(
+    producer_profile: ProducerProfile | None,
+    consumer_profile: ConsumerProfile | None,
+) -> ComponentScoresResponse | None:
+    if not producer_profile or not consumer_profile:
+        return None
+
+    producer_output = max(float(producer_profile.heat_output_kw or 0.0), 0.0001)
+    consumer_flow = max(float(consumer_profile.flow_rate_lph or 0.0), 0.0001)
+    volume_ratio = min(producer_output, consumer_flow) / max(producer_output, consumer_flow)
+
+    producer_schedule = str(producer_profile.schedule_description or "").strip().lower()
+    consumer_schedule = str(consumer_profile.schedule_description or "").strip().lower()
+    schedule_overlap = 1.0 if producer_schedule and producer_schedule == consumer_schedule else 0.6
+
+    distance_km = haversine_km(
+        float(producer_profile.latitude),
+        float(producer_profile.longitude),
+        float(consumer_profile.latitude),
+        float(consumer_profile.longitude),
+    )
+    score = calculate_compatibility_score(
+        distance_km=distance_km,
+        producer_temp_c=float(producer_profile.supply_temperature_c),
+        consumer_min_temp_c=float(consumer_profile.demand_temperature_c),
+        volume_match_ratio=volume_ratio,
+        schedule_overlap_ratio=schedule_overlap,
+    )
+    return ComponentScoresResponse(
+        proximity_score=score["proximity_score"],
+        temperature_fit_score=score["temperature_fit_score"],
+        volume_fit_score=score["volume_fit_score"],
+        schedule_fit_score=score["schedule_fit_score"],
+    )
+
+
+def _confidence_score_from_state(integration_state: str | None) -> float | None:
+    if integration_state == "ready":
+        return 0.9
+    if integration_state == "local_rules":
+        return 0.65
+    return None

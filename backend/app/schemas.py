@@ -150,12 +150,21 @@ class UnifiedProfileResponse(BaseModel):
     flow_rate_lph: float | None = None
 
 
+class ComponentScoresResponse(BaseModel):
+    proximity_score: float
+    temperature_fit_score: float
+    volume_fit_score: float
+    schedule_fit_score: float
+
+
 class MatchCardResponse(BaseModel):
     match_id: int
     counterpart_user_id: int
     counterpart_organization_name: str
     counterpart_role: UserRole
     compatibility_score: float | None
+    component_scores: ComponentScoresResponse | None = None
+    confidence_score: float | None = None
     integration_state: str
     model_version: str | None
 
@@ -192,6 +201,8 @@ class MatchDetailResponse(BaseModel):
     producer_user_id: int
     consumer_user_id: int
     compatibility_score: float | None
+    component_scores: ComponentScoresResponse | None = None
+    confidence_score: float | None = None
     integration_state: str
     model_version: str | None
     producer_profile: ProfileSummaryResponse | None
@@ -289,3 +300,11 @@ class CalculateScoreResponse(BaseModel):
     temperature_fit_score: float
     volume_fit_score: float
     schedule_fit_score: float
+
+
+class CalculateScoreNearestResponse(CalculateScoreResponse):
+    comparison_source: str
+    counterpart_role: UserRole
+    counterpart_label: str
+    counterpart_city_zone: str
+    distance_km: float

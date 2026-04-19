@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import GeoMatchesMap from "@/components/domain/GeoMatchesMap";
 import { Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { feedbackApi, mapMatchDetailToView, matchesApi } from "@/lib/api/client";
 
@@ -125,6 +126,8 @@ export default function MatchWorkspace({ mapMode = false }) {
   const [sortBy, setSortBy] = useState("score");
   const [detailOverlay, setDetailOverlay] = useState(null);
   const [generating, setGenerating] = useState(false);
+  const [mapCoordinatesById, setMapCoordinatesById] = useState({});
+  const [loadingMapPoints, setLoadingMapPoints] = useState(false);
 
   const reload = () => {
     Promise.all([matchesApi.list(), feedbackApi.list()]).then(([nextMatches, nextFeedback]) => {
@@ -189,7 +192,66 @@ export default function MatchWorkspace({ mapMode = false }) {
     };
   }, [activeId, matches]);
 
+  useEffect(() => {
+    if (!mapMode) return;
+
+    const apiMatchIds = visibleMatches.filter((item) => item.source === "api").map((item) => item.id);
+    if (!apiMatchIds.length) {
+      return;
+    }
+
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- set loading indicator before async detail fetch starts
+    setLoadingMapPoints(true);
+
+    Promise.all(
+      apiMatchIds.map(async (id) => {
+        const detail = await matchesApi.getDetail(id);
+        if (!detail) return [id, null];
+        const mapped = mapMatchDetailToView(detail);
+        const midpoint = mapped?.coordinates?.midpoint;
+        if (!midpoint || typeof midpoint.lat !== "number" || typeof midpoint.lon !== "number") {
+          return [id, null];
+        }
+        return [id, midpoint];
+      })
+    )
+      .then((entries) => {
+        if (cancelled) return;
+        const nextMap = {};
+        for (const [id, point] of entries) {
+          if (!point) continue;
+          nextMap[id] = point;
+        }
+        setMapCoordinatesById(nextMap);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMapPoints(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mapMode, visibleMatches]);
+
   const feedbackByMatch = useMemo(() => Object.fromEntries(feedback.map((entry) => [entry.matchId, entry])), [feedback]);
+  const mapPoints = useMemo(
+    () =>
+      visibleMatches
+        .map((item) => {
+          const coordinate = mapCoordinatesById[item.id];
+          if (!coordinate) return null;
+          return {
+            id: item.id,
+            name: item.counterpartName,
+            score: item.score,
+            lat: Number(coordinate.lat),
+            lon: Number(coordinate.lon),
+          };
+        })
+        .filter(Boolean),
+    [visibleMatches, mapCoordinatesById]
+  );
 
   return (
     <div className="any-page" style={{ gap: 22 }}>
@@ -248,39 +310,15 @@ export default function MatchWorkspace({ mapMode = false }) {
       <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", alignItems: "start" }}>
         <section className="any-card" style={{ display: "grid", gap: 12 }}>
           {mapMode ? (
-            <div
-              style={{
-                minHeight: 330,
-                border: "0.5px solid #e0ddd6",
-                borderRadius: 12,
-                display: "grid",
-                placeItems: "center",
-                color: "#999",
-                position: "relative",
-              }}
-            >
-              <p style={{ margin: 0, textAlign: "center", maxWidth: 260 }}>
-                Map preview area. Markers represent filtered candidate facilities.
+            <div style={{ display: "grid", gap: 8 }}>
+              <GeoMatchesMap points={mapPoints} selectedId={activeId} onSelect={setSelectedId} />
+              <p style={{ margin: 0, color: "#999", fontSize: 12 }}>
+                {loadingMapPoints
+                  ? "Loading real map coordinates from backend..."
+                  : mapPoints.length
+                    ? "Map shows real midpoint coordinates of your currently filtered matches."
+                    : "No real map points available yet. Generate matches and ensure both profiles have valid coordinates."}
               </p>
-              {visibleMatches.map((item, index) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setSelectedId(item.id)}
-                  style={{
-                    position: "absolute",
-                    left: `${20 + (index % 5) * 15}%`,
-                    top: `${30 + Math.floor(index / 5) * 20}%`,
-                    width: 18,
-                    height: 18,
-                    borderRadius: 999,
-                    border: "2px solid #fff",
-                    background: item.id === activeId ? "#e05b42" : "#222",
-                    cursor: "pointer",
-                  }}
-                  title={item.counterpartName}
-                />
-              ))}
             </div>
           ) : null}
 

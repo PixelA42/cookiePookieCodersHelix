@@ -1,6 +1,5 @@
 import { getToken } from "@/lib/auth";
 import { getFeedback, getProfile, saveFeedback, saveProfile } from "@/lib/profileStorage";
-import { MOCK_MATCHES } from "@/lib/mockMatches";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
@@ -131,6 +130,8 @@ function buildConsumerPayload(profile) {
 
 function mapMatchListItem(item) {
   const score = item.compatibility_score != null ? Math.round(Number(item.compatibility_score)) : 0;
+  const componentScores = item.component_scores || null;
+  const sourceLabel = item.integration_state === "ready" ? "AI model" : item.integration_state === "local_rules" ? "Local rules" : "Unavailable";
   return {
     id: String(item.match_id),
     source: "api",
@@ -140,21 +141,53 @@ function mapMatchListItem(item) {
     score,
     distanceKm: null,
     scheduleOverlap: "—",
-    temperatureFit: "—",
-    summary: `Match score ${score}. Open for distance and profile detail.`,
+    temperatureFit:
+      componentScores && typeof componentScores.temperature_fit_score === "number"
+        ? `${Math.round(componentScores.temperature_fit_score)} / 100`
+        : "—",
+    summary: `Match score ${score} via ${sourceLabel}${item.model_version ? ` (${item.model_version})` : ""}.`,
     location: "—",
     contact: "—",
-    explanation: [],
+    explanation: [
+      `Score source: ${sourceLabel}.`,
+      item.confidence_score != null ? `Confidence: ${(Number(item.confidence_score) * 100).toFixed(0)}%.` : "Confidence: not provided.",
+    ],
     coordinates: null,
+    compatibilityBreakdown:
+      componentScores && typeof componentScores === "object"
+        ? {
+            distance: Number(componentScores.proximity_score),
+            temperature: Number(componentScores.temperature_fit_score),
+            schedule: Number(componentScores.schedule_fit_score),
+            volume: Number(componentScores.volume_fit_score),
+          }
+        : null,
+    integrationState: item.integration_state,
+    modelVersion: item.model_version || null,
+    confidenceScore: item.confidence_score ?? null,
     _raw: item,
   };
 }
 
 function mapMatchDetailToView(detail) {
+  const serverBreakdown = detail.component_scores || null;
   const pp = detail.producer_profile;
   const cp = detail.consumer_profile;
   if (!pp || !cp) {
-    return { distanceKm: null, explanation: [], location: "—" };
+    return {
+      distanceKm: null,
+      explanation: [],
+      location: "—",
+      coordinates: null,
+      compatibilityBreakdown: serverBreakdown
+        ? {
+            distance: Number(serverBreakdown.proximity_score),
+            temperature: Number(serverBreakdown.temperature_fit_score),
+            schedule: Number(serverBreakdown.schedule_fit_score),
+            volume: Number(serverBreakdown.volume_fit_score),
+          }
+        : null,
+    };
   }
   const distanceKm = haversineKm(pp.latitude, pp.longitude, cp.latitude, cp.longitude);
   const temperatureGap = Math.abs(Number(pp.supply_temperature_c) - Number(cp.demand_temperature_c));
@@ -173,6 +206,10 @@ function mapMatchDetailToView(detail) {
     `Consumer facility ${cp.facility_name} — schedule: ${cp.schedule_description}.`,
     `Great-circle distance ≈ ${distanceKm.toFixed(1)} km between the two coordinates.`,
   ];
+  const producerLat = Number(pp.latitude);
+  const producerLon = Number(pp.longitude);
+  const consumerLat = Number(cp.latitude);
+  const consumerLon = Number(cp.longitude);
   return {
     distanceKm: Math.round(distanceKm * 10) / 10,
     scheduleOverlap: pp.schedule_description === cp.schedule_description ? "Strong overlap" : "Needs validation",
@@ -192,11 +229,26 @@ function mapMatchDetailToView(detail) {
       volumeM3h: cp.flow_rate_lph,
       schedule: cp.schedule_description,
     },
-    compatibilityBreakdown: {
-      distance: distanceScore,
-      temperature: temperatureScore,
-      schedule: scheduleScore,
+    coordinates: {
+      producer: { lat: producerLat, lon: producerLon },
+      consumer: { lat: consumerLat, lon: consumerLon },
+      midpoint: {
+        lat: (producerLat + consumerLat) / 2,
+        lon: (producerLon + consumerLon) / 2,
+      },
     },
+    compatibilityBreakdown: serverBreakdown
+      ? {
+          distance: Number(serverBreakdown.proximity_score),
+          temperature: Number(serverBreakdown.temperature_fit_score),
+          schedule: Number(serverBreakdown.schedule_fit_score),
+          volume: Number(serverBreakdown.volume_fit_score),
+        }
+      : {
+          distance: distanceScore,
+          temperature: temperatureScore,
+          schedule: scheduleScore,
+        },
   };
 }
 
@@ -283,14 +335,14 @@ export const profileApi = {
 
 export const matchesApi = {
   async list() {
-    if (!getToken()) return MOCK_MATCHES;
+    if (!getToken()) return [];
     try {
       const data = await request("/matches");
       const items = data.items || [];
       if (!items.length) return [];
       return items.map(mapMatchListItem);
     } catch {
-      return MOCK_MATCHES;
+      return [];
     }
   },
 

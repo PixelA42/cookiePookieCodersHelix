@@ -1,20 +1,37 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getToken } from "@/lib/auth";
+
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1").replace(/\/$/, "");
+const DEFAULT_PAYLOAD = {
+  distance_km: 5.2,
+  producer_temp_c: 85.0,
+  consumer_min_temp_c: 40.0,
+  volume_match_ratio: 0.8,
+  schedule_overlap_ratio: 1.0,
+};
 
 export default function AiCompatibilityCard() {
   const [loading, setLoading] = useState(false);
   const [score, setScore] = useState(null);
   const [breakdown, setBreakdown] = useState(null);
+  const [comparisonContext, setComparisonContext] = useState("Click calculate to score against your nearest real counterpart.");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
 
-  const payload = {
-    distance_km: 5.2,
-    producer_temp_c: 85.0,
-    consumer_min_temp_c: 40.0,
-    volume_match_ratio: 0.8,
-    schedule_overlap_ratio: 1.0,
+  const applyScores = (data) => {
+    setStatus(data.status || "");
+    if (typeof data.compatibility_score !== "number") {
+      throw new Error("Invalid response from backend");
+    }
+    setScore(data.compatibility_score);
+    setBreakdown({
+      proximity_score: data.proximity_score,
+      temperature_fit_score: data.temperature_fit_score,
+      volume_fit_score: data.volume_fit_score,
+      schedule_fit_score: data.schedule_fit_score,
+    });
   };
 
   const badgeClasses = useMemo(() => {
@@ -39,31 +56,41 @@ export default function AiCompatibilityCard() {
     setBreakdown(null);
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/calculate-score", {
+      const token = getToken();
+      if (token) {
+        const nearestResponse = await fetch(`${API_BASE}/calculate-score/nearest-context`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (nearestResponse.ok) {
+          const nearestData = await nearestResponse.json();
+          applyScores(nearestData);
+          setComparisonContext(
+            `Compared against nearest ${nearestData.counterpart_role} in ${nearestData.counterpart_city_zone}: ${nearestData.counterpart_label} (${Number(nearestData.distance_km || 0).toFixed(1)} km).`
+          );
+          return;
+        }
+      }
+
+      const response = await fetch(`${API_BASE}/calculate-score`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(DEFAULT_PAYLOAD),
       });
 
       if (!response.ok) {
         throw new Error(`Request failed (${response.status})`);
       }
 
-      const data = await response.json();
-      setStatus(data.status || "");
-
-      if (typeof data.compatibility_score !== "number") {
-        throw new Error("Invalid response from backend");
-      }
-      setScore(data.compatibility_score);
-      setBreakdown({
-        proximity_score: data.proximity_score,
-        temperature_fit_score: data.temperature_fit_score,
-        volume_fit_score: data.volume_fit_score,
-        schedule_fit_score: data.schedule_fit_score,
-      });
+      const fallbackData = await response.json();
+      applyScores(fallbackData);
+      setComparisonContext("Used fallback sample values because nearest real counterpart context was unavailable.");
     } catch (err) {
       setError(err?.message || "Failed to calculate score");
     } finally {
@@ -76,6 +103,7 @@ export default function AiCompatibilityCard() {
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-gray-900">AI Compatibility</h2>
         <p className="mt-1 text-sm text-gray-500">Calculate a test compatibility score from your FastAPI model endpoint.</p>
+        <p className="mt-2 text-xs text-gray-500">{comparisonContext}</p>
       </div>
 
       <button

@@ -184,6 +184,58 @@ def test_match_detail_enforces_ownership() -> None:
     assert response.status_code == 404
 
 
+def test_match_detail_includes_component_scores_and_confidence() -> None:
+    _reset_db()
+    with SessionLocal() as db:
+        producer = _create_user(db, "producer-detail@test.com", UserRole.producer)
+        consumer = _create_user(db, "consumer-detail@test.com", UserRole.consumer)
+        db.add(
+            ProducerProfile(
+                user_id=producer.id,
+                facility_name="P-detail",
+                latitude=12.5,
+                longitude=77.4,
+                supply_temperature_c=84,
+                heat_output_kw=140,
+                schedule_description="weekday",
+            )
+        )
+        db.add(
+            ConsumerProfile(
+                user_id=consumer.id,
+                facility_name="C-detail",
+                latitude=12.6,
+                longitude=77.5,
+                demand_temperature_c=60,
+                flow_rate_lph=130,
+                schedule_description="weekday",
+            )
+        )
+        match = Match(
+            producer_user_id=producer.id,
+            consumer_user_id=consumer.id,
+            compatibility_score=82.0,
+            integration_state="ready",
+            model_version="ml-v1",
+        )
+        db.add(match)
+        db.commit()
+        db.refresh(match)
+        match_id = match.id
+
+    app.dependency_overrides[get_verified_current_user] = lambda: producer
+    client = TestClient(app)
+    response = client.get(f"/api/v1/matches/{match_id}")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["confidence_score"] == 0.9
+    assert payload["component_scores"] is not None
+    assert payload["component_scores"]["temperature_fit_score"] >= 90
+    assert payload["component_scores"]["proximity_score"] >= 0
+
+
 def test_generation_returns_model_unavailable_when_ml_not_connected() -> None:
     _reset_db()
     with SessionLocal() as db:
