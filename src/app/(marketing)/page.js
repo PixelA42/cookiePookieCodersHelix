@@ -7,86 +7,78 @@ import MarketingFooter from "@/components/marketing/MarketingFooter";
 export default function MarketingPage() {
   return (
     <div style={{ display: "grid", gap: 0 }}>
-      <section style={{ paddingBottom: 28 }}>
-        <div className="hero-grid">
-          <div className="reveal-up" style={{ display: "grid", gap: 18 }}>
-            <div className="eyebrow eyebrow-brutal" style={{ marginBottom: 6 }}>
-              AI heat exchange network
-            </div>
-            <h1 className="hero-title">
-              Waste heat.
-              <br />
-              <span className="hero-title-accent">Finds a second life.</span>
-            </h1>
-            <p className="hero-subcopy">
-              HeatREco links industrial producers and nearby thermal consumers with compatibility scored from distance,
-              temperature fit, and schedule overlap. Factories and data centers stop venting usable heat while
-              greenhouses, cold storage, and district systems recover it as utility.
-            </p>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link href="/auth/register">
-                <Button shape="sharp">Create facility profile</Button>
-              </Link>
-              <Link href="/auth/login">
-                <Button variant="ghost" shape="sharp">
-                  Enter dashboard
-                </Button>
-              </Link>
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Badge tone="primary" shape="tag">
-                Producer + Consumer roles
-              </Badge>
-              <Badge tone="good" shape="tag">
-                AI compatibility score
-              </Badge>
-              <Badge tone="neutral" shape="tag">
-                REST API /api/v1
-              </Badge>
-            </div>
+      <section className="poster-hero">
+        <div className="poster-hero-left reveal-up">
+          <div className="eyebrow" style={{ width: "fit-content" }}>
+            AI heat exchange network
           </div>
-
-          <div className="mesh-panel reveal-up delay-1" style={{ minHeight: 360 }}>
-            <div className="mesh-panel-inner">
-              <div className="glass-row">
-                <div>
-                  <strong style={{ fontSize: 14, display: "block" }}>Producer</strong>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Data Center · 84°C surplus</div>
-                </div>
-                <Badge tone="primary">Live</Badge>
-              </div>
-
-              <div className="glass-row">
-                <div>
-                  <strong style={{ fontSize: 14, display: "block" }}>Consumer</strong>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Greenhouse · 72°C demand</div>
-                </div>
-                <Badge tone="good">8.1km</Badge>
-              </div>
-
-              <div className="glass-row">
-                <div>
-                  <strong style={{ fontSize: 14, display: "block" }}>Schedule overlap</strong>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Weekdays 06:00 to 18:00</div>
-                </div>
-                <Badge tone="neutral">Stable</Badge>
-              </div>
-
-              <Card variant="brutal" strong style={{ marginTop: 4 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                  <strong>AI compatibility</strong>
-                  <Badge tone="good">93 / 100</Badge>
-                </div>
-                <p style={{ margin: "10px 0 0", color: "var(--text-muted)", fontSize: 13 }}>
-                  Ranked high due to short route feasibility, thermal range overlap, and aligned operating windows.
-                </p>
-              </Card>
-            </div>
-            <div className="floating-note">
-              Feedback status: 16 useful votes this month are improving recommendation precision.
-            </div>
+          <h1 className="poster-hero-title">
+            A safer network
+            <br />
+            <span>for thermal collaboration</span>
+          </h1>
+          <p className="hero-subcopy" style={{ maxWidth: 620 }}>
+            HeatREco links industrial producers and nearby thermal consumers with compatibility scored from distance,
+            temperature fit, and schedule overlap.
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/auth/register">
+              <Button shape="sharp">Create facility profile</Button>
+            </Link>
+            <Link href="/auth/login">
+              <Button variant="ghost" shape="sharp">
+                Enter dashboard
+              </Button>
+            </Link>
           </div>
         </div>
+
+        <div className="poster-hero-right reveal-up delay-1">
+          <div className="poster-stack-card">
+            <strong>Producer profile</strong>
+            <p>Data center · 84°C surplus · weekday output</p>
+          </div>
+          <div className="poster-stack-card">
+            <strong>Consumer profile</strong>
+            <p>Greenhouse · 72°C demand · daily thermal intake</p>
+          </div>
+          <div className="poster-stack-card">
+            <strong>AI Compatibility</strong>
+            <p>93 / 100 from distance, thermal overlap, and schedule fit.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="poster-strip">
+        <article className="poster-tile">
+          <h3>Profile submission</h3>
+          <p>
+            Role-aware forms capture location, temperature, output or demand, and operating schedule.
+          </p>
+        </article>
+        <article className="poster-tile">
+          <h3>Offline & online ready</h3>
+          <p>
+            PostgreSQL-backed data and local development support keep workflows stable for cloud and test environments.
+          </p>
+        </article>
+        <article className="poster-tile poster-tile-accent">
+          <h3>AI-driven ranking</h3>
+          <p>
+            Match recommendations are scored and ordered by model-driven compatibility from all available signals.
+          </p>
+        </article>
+        <article className="poster-tile poster-tile-cta">
+          <Badge tone="good" style={{ width: "fit-content", marginBottom: 10 }}>
+            Feedback loop live
+          </Badge>
+          <p style={{ marginTop: 0 }}>
+            Useful and not useful responses feed training data so future pair quality improves over time.
+          </p>
+          <Link href="/dashboard" style={{ fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 4 }}>
+            Open match workspace
+          </Link>
+        </article>
       </section>
 
       <MarqueeStrip />

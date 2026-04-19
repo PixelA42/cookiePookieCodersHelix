@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge, Button, Divider, Field, Input, Select, Textarea } from "@/components/ui/primitives";
+import { Badge, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 
 const BASICS = { companyName: "", facilityName: "", role: "producer", location: "", latitude: "", longitude: "" };
 const PRODUCER_FIELDS = { producerHeatGrade: "high", producerTemperatureC: "", producerVolumeM3h: "", producerHeatSchedule: "", notes: "" };
@@ -26,7 +26,7 @@ function mergeInitialProfile(initialProfile) {
   return { ...BASICS, ...(role === "consumer" ? CONSUMER_FIELDS : PRODUCER_FIELDS), ...initialProfile, role };
 }
 
-export default function ProfileEditor({ initialProfile, title, subtitle, submitLabel = "Save profile", onSubmit }) {
+export default function ProfileEditor({ initialProfile, title, subtitle, titleAccent = "", submitLabel = "Save profile", onSubmit }) {
   const [profile, setProfile] = useState(() => mergeInitialProfile(initialProfile));
   const [stepIndex, setStepIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -96,16 +96,40 @@ export default function ProfileEditor({ initialProfile, title, subtitle, submitL
   };
 
   return (
-    <div style={{ display: "grid", gap: 32, maxWidth: 980 }}>
-      <div style={{ display: "grid", gap: 12 }}>
-        <div className="eyebrow" style={{ marginBottom: 0, display: "inline-flex", width: "fit-content", borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>Setup flow</div>
-        <h1 style={{ margin: 0, fontSize: "clamp(28px, 6vw, 40px)", lineHeight: 1.1 }}>{title}</h1>
-        <p style={{ marginBottom: 0, color: "var(--text-muted)", maxWidth: 760, fontSize: 15 }}>{subtitle}</p>
+    <div className="any-page" style={{ maxWidth: 1080, gap: 20 }}>
+      <div className="any-card" style={{ display: "grid", gap: 12 }}>
+        <h1 className="any-title">
+          {title}
+          {titleAccent ? (
+            <>
+              <br />
+              <span className="any-title-accent">{titleAccent}</span>
+            </>
+          ) : null}
+        </h1>
+        <p className="any-subtitle" style={{ marginTop: 0 }}>{subtitle}</p>
+        <p className="any-section-label" style={{ marginTop: 4 }}>Setup flow</p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {PROFILE_STEPS.map((item, idx) => {
+            const active = idx === stepIndex;
+            const complete = idx < stepIndex || (item.id === "basics" && stepsComplete.basics) || (item.id === "capacity" && stepsComplete.capacity);
+            return (
+              <span
+                key={item.id}
+                className={`any-pill${active ? " accent" : ""}`}
+              >
+                <span>{complete ? "Done" : item.icon}</span>
+                <span>{item.title}</span>
+              </span>
+            );
+          })}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 24 }}>
+      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
         {step.id === "basics" ? (
-          <div style={{ display: "grid", gap: 20 }}>
+          <div className="any-card" style={{ display: "grid", gap: 20 }}>
+            <p className="any-section-label" style={{ margin: 0 }}>Facility basics</p>
             <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
               <Field label="Organization name"><Input value={profile.companyName} onChange={(event) => updateField("companyName", event.target.value)} /></Field>
               <Field label="Facility name"><Input value={profile.facilityName} onChange={(event) => updateField("facilityName", event.target.value)} /></Field>
@@ -114,12 +138,13 @@ export default function ProfileEditor({ initialProfile, title, subtitle, submitL
               <Field label="Latitude"><Input value={profile.latitude} onChange={(event) => updateField("latitude", event.target.value)} /></Field>
               <Field label="Longitude"><Input value={profile.longitude} onChange={(event) => updateField("longitude", event.target.value)} /></Field>
             </div>
-            <Button type="button" variant="soft" onClick={fillCurrentLocation} disabled={geoBusy}>{geoBusy ? "Detecting..." : "Use current location"}</Button>
+            <button type="button" className="any-btn-secondary" onClick={fillCurrentLocation} disabled={geoBusy}>{geoBusy ? "Detecting..." : "Use current location"}</button>
           </div>
         ) : null}
 
         {step.id === "capacity" ? (
-          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <div className="any-card" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+            <p className="any-section-label" style={{ margin: 0, gridColumn: "1 / -1" }}>Thermal profile</p>
             {isConsumer ? (
               <>
                 <Field label="Thermal demand (m3/h)"><Input value={profile.consumerThermalDemandM3h} onChange={(event) => updateField("consumerThermalDemandM3h", event.target.value)} /></Field>
@@ -140,23 +165,25 @@ export default function ProfileEditor({ initialProfile, title, subtitle, submitL
         ) : null}
 
         {step.id === "review" ? (
-          <div style={{ display: "grid", gap: 14 }}>
-            <Badge tone="primary">{isConsumer ? "Consumer profile" : "Producer profile"}</Badge>
-            <p style={{ margin: 0, color: "var(--text-muted)" }}>{profile.facilityName} at {profile.location}</p>
+          <div className="any-card" style={{ display: "grid", gap: 14 }}>
+            <p className="any-section-label" style={{ margin: 0 }}>Review</p>
+            <Badge tone="neutral" style={{ width: "fit-content", border: "0.5px solid #ebb0a5", background: "#fff7f5", color: "#c65440" }}>{isConsumer ? "Consumer profile" : "Producer profile"}</Badge>
+            <p style={{ margin: 0, color: "#888" }}>{profile.facilityName} at {profile.location}</p>
           </div>
         ) : null}
 
         {error ? <div style={{ padding: "12px 16px", borderRadius: 10, background: "#feeaea", border: "1px solid #ffd7d7", color: "var(--bad)", fontSize: 13 }}>{error}</div> : null}
 
-        <Divider />
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <Button type="button" variant="ghost" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} disabled={stepIndex === 0 || busy}>Back</Button>
+        <div className="any-card" style={{ padding: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <button type="button" className="any-btn-secondary" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} disabled={stepIndex === 0 || busy}>Back</button>
           <div style={{ display: "flex", gap: 12 }}>
             {stepIndex < PROFILE_STEPS.length - 1 ? (
-              <Button type="button" onClick={() => setStepIndex((current) => Math.min(PROFILE_STEPS.length - 1, current + 1))}>Continue</Button>
+              <button type="button" className="any-btn-secondary" onClick={() => setStepIndex((current) => Math.min(PROFILE_STEPS.length - 1, current + 1))}>Continue</button>
             ) : (
-              <Button type="submit" disabled={busy}>{busy ? "Saving..." : submitLabel}</Button>
+              <button type="submit" className="any-btn-primary" disabled={busy}>{busy ? "Saving..." : submitLabel}</button>
             )}
+          </div>
           </div>
         </div>
       </form>

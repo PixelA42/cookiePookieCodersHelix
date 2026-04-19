@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Badge, Button, Card } from "@/components/ui/primitives";
+import AiCompatibilityCard from "@/components/domain/AiCompatibilityCard";
 import { getProfile } from "@/lib/profileStorage";
 
 const JOURNEY = [
@@ -106,6 +107,8 @@ export default function DashboardHomePage() {
           ))}
         </div>
       </section>
+
+      <AiCompatibilityCard />
     </div>
   );
 }

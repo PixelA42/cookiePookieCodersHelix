@@ -272,3 +272,20 @@ class ConnectionRequestResponse(BaseModel):
 
 class ConnectionRequestListResponse(BaseModel):
     items: list[ConnectionRequestResponse]
+
+
+class CalculateScoreRequest(BaseModel):
+    distance_km: float = Field(ge=0)
+    producer_temp_c: float
+    consumer_min_temp_c: float
+    volume_match_ratio: float = Field(ge=0)
+    schedule_overlap_ratio: float = Field(ge=0, le=1)
+
+
+class CalculateScoreResponse(BaseModel):
+    status: str
+    compatibility_score: float
+    proximity_score: float
+    temperature_fit_score: float
+    volume_fit_score: float
+    schedule_fit_score: float

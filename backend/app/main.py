@@ -9,6 +9,7 @@ from app.routers.connections import router as connections_router
 from app.routers.feedback import router as feedback_router
 from app.routers.matches import router as matches_router
 from app.routers.profiles import router as profiles_router
+from app.routers.scoring import router as scoring_router
 from app.services.seed_service import seed_mock_users
 
 settings = get_settings()
@@ -49,3 +50,4 @@ app.include_router(profiles_router, prefix=settings.api_v1_prefix)
 app.include_router(matches_router, prefix=settings.api_v1_prefix)
 app.include_router(feedback_router, prefix=settings.api_v1_prefix)
 app.include_router(connections_router, prefix=settings.api_v1_prefix)
+app.include_router(scoring_router, prefix=settings.api_v1_prefix)

@@ -19,11 +19,13 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="workspace-page" style={{ maxWidth: 400 }}>
-        <div className="eyebrow" style={{ width: "fit-content", borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
-          Profile
-        </div>
-        <p style={{ color: "var(--text-muted)", margin: 0 }}>Loading profile…</p>
+      <div className="any-page" style={{ maxWidth: 460 }}>
+        <h1 className="any-title" style={{ fontSize: "clamp(34px, 6vw, 40px)" }}>
+          Facility
+          <br />
+          <span className="any-title-accent">profile</span>
+        </h1>
+        <p style={{ color: "#999", margin: 0 }}>Loading profile...</p>
       </div>
     );
   }
@@ -32,6 +34,7 @@ export default function ProfilePage() {
     <ProfileEditor
       initialProfile={initialProfile}
       title="Edit facility profile"
+      titleAccent="for better matches"
       subtitle="Keep your temperature ranges, demand or output, and operating schedule current so HeatREco can refresh match quality."
       submitLabel="Save profile"
       onSubmit={async (nextProfile) => {

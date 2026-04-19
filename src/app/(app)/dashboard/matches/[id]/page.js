@@ -3,14 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Divider, Field, Textarea } from "@/components/ui/primitives";
+import { Badge, Field, Textarea } from "@/components/ui/primitives";
 import { connectionsApi, feedbackApi, mapMatchDetailToView, matchesApi } from "@/lib/api/client";
-
-function scoreTone(score) {
-  if (score >= 85) return "good";
-  if (score >= 70) return "primary";
-  return "neutral";
-}
 
 function BreakdownBars({ data }) {
   const rows = [
@@ -105,15 +99,15 @@ export default function MatchDetailPage() {
   }, [match]);
 
   if (loading) {
-    return <p style={{ margin: 0, color: "var(--text-muted)" }}>Loading match details...</p>;
+    return <p style={{ margin: 0, color: "#999" }}>Loading match details...</p>;
   }
 
   if (!match) {
     return (
-      <div style={{ display: "grid", gap: 12 }}>
-        <h1 style={{ margin: 0 }}>Match not found</h1>
-        <p style={{ margin: 0, color: "var(--text-muted)" }}>This match is unavailable or outside your account scope.</p>
-        <Link href="/dashboard" style={{ color: "var(--primary)", fontWeight: 600, textDecoration: "none" }}>
+      <div className="any-page" style={{ display: "grid", gap: 12 }}>
+        <h1 className="any-title">Match not found</h1>
+        <p style={{ margin: 0, color: "#999" }}>This match is unavailable or outside your account scope.</p>
+        <Link href="/dashboard" style={{ color: "#c65440", fontWeight: 600, textDecoration: "none" }}>
           Return to dashboard
         </Link>
       </div>
@@ -121,51 +115,48 @@ export default function MatchDetailPage() {
   }
 
   return (
-    <div className="workspace-page" style={{ gap: 28 }}>
+    <div className="any-page" style={{ gap: 22 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
-          <div className="eyebrow" style={{ marginBottom: 10, borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
-            Match detail
-          </div>
-          <h1 style={{ margin: 0, marginBottom: 8, fontSize: "clamp(28px, 6vw, 40px)" }}>{match.counterpartName}</h1>
-          <p style={{ margin: 0, color: "var(--text-muted)", maxWidth: 680 }}>{match.summary}</p>
+          <h1 className="any-title" style={{ marginBottom: 8 }}>
+            Match
+            <br />
+            <span className="any-title-accent">detail</span>
+          </h1>
+          <p className="any-subtitle" style={{ marginTop: 0, maxWidth: 680 }}>{match.summary}</p>
         </div>
-        <Badge tone={scoreTone(match.score)} style={{ fontSize: 14, padding: "6px 12px" }}>
+        <Badge tone="neutral" style={{ fontSize: 14, padding: "6px 12px", border: "0.5px solid #ebb0a5", background: "#fff7f5", color: "#c65440" }}>
           {match.score}% Compatible
         </Badge>
       </div>
 
       <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-        <div style={{ padding: 16, border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)" }}>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>Distance</div>
+        <div className="any-card any-card-tight">
+          <div style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>Distance</div>
           <strong style={{ fontSize: 20 }}>{match.distanceKm != null ? `${match.distanceKm} km` : "—"}</strong>
         </div>
-        <div style={{ padding: 16, border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)" }}>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>Temperature fit</div>
+        <div className="any-card any-card-tight">
+          <div style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>Temperature fit</div>
           <strong style={{ fontSize: 20 }}>{match.temperatureFit}</strong>
         </div>
-        <div style={{ padding: 16, border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)" }}>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>Schedule fit</div>
+        <div className="any-card any-card-tight">
+          <div style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>Schedule fit</div>
           <strong style={{ fontSize: 20 }}>{match.scheduleOverlap}</strong>
         </div>
       </div>
 
-      <Divider />
-
-      <section style={{ display: "grid", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Compatibility breakdown</h2>
+      <section className="any-card" style={{ display: "grid", gap: 12 }}>
+        <p className="any-section-label" style={{ margin: 0 }}>Compatibility breakdown</p>
         <BreakdownBars data={match.compatibilityBreakdown} />
       </section>
 
-      <Divider />
-
-      <section style={{ display: "grid", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Facility deep-dive</h2>
+      <section className="any-card" style={{ display: "grid", gap: 12 }}>
+        <p className="any-section-label" style={{ margin: 0 }}>Facility deep-dive</p>
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {deepDive.map((block) => (
-            <div key={block.label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
+            <div key={block.label} style={{ border: "0.5px solid #e0ddd6", borderRadius: 12, padding: 16, background: "#fff" }}>
               <strong style={{ display: "block", marginBottom: 8 }}>{block.label}</strong>
-              <ul style={{ margin: 0, paddingLeft: 18, color: "var(--text-muted)", lineHeight: 1.6 }}>
+              <ul style={{ margin: 0, paddingLeft: 18, color: "#888", lineHeight: 1.6 }}>
                 {block.values.map((value) => (
                   <li key={value}>{value}</li>
                 ))}
@@ -175,13 +166,11 @@ export default function MatchDetailPage() {
         </div>
       </section>
 
-      <Divider />
-
-      <section style={{ display: "grid", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Feedback</h2>
+      <section className="any-card" style={{ display: "grid", gap: 12 }}>
+        <p className="any-section-label" style={{ margin: 0 }}>Feedback</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Button
-            variant={feedbackState === "useful" ? "primary" : "soft"}
+          <button
+            className="any-btn-primary"
             disabled={savingFeedback}
             onClick={async () => {
               setSavingFeedback(true);
@@ -192,9 +181,9 @@ export default function MatchDetailPage() {
             }}
           >
             Interested / Useful
-          </Button>
-          <Button
-            variant={feedbackState === "not_useful" ? "danger" : "ghost"}
+          </button>
+          <button
+            className="any-btn-secondary"
             disabled={savingFeedback}
             onClick={async () => {
               setSavingFeedback(true);
@@ -205,17 +194,15 @@ export default function MatchDetailPage() {
             }}
           >
             Not for me
-          </Button>
+          </button>
         </div>
         <Field label="Reason (optional)">
           <Textarea value={reason} onChange={(event) => setReason(event.target.value)} style={{ minHeight: 84 }} />
         </Field>
       </section>
 
-      <Divider />
-
-      <section style={{ display: "grid", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Call to action</h2>
+      <section className="any-card" style={{ display: "grid", gap: 12 }}>
+        <p className="any-section-label" style={{ margin: 0 }}>Call to action</p>
         <Field label="Request message (optional)">
           <Textarea
             value={requestMessage}
@@ -225,7 +212,8 @@ export default function MatchDetailPage() {
           />
         </Field>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Button
+          <button
+            className="any-btn-primary"
             disabled={requestBusy}
             onClick={async () => {
               setRequestBusy(true);
@@ -240,12 +228,12 @@ export default function MatchDetailPage() {
             }}
           >
             Request connection
-          </Button>
+          </button>
           <Link href="/connections" style={{ textDecoration: "none" }}>
-            <Button type="button" variant="ghost">View connections</Button>
+            <button type="button" className="any-btn-secondary">View connections</button>
           </Link>
         </div>
-        {notice ? <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>{notice}</p> : null}
+        {notice ? <p style={{ margin: 0, fontSize: 13, color: "#999" }}>{notice}</p> : null}
       </section>
     </div>
   );

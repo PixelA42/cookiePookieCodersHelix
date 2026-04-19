@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge, Button, Divider } from "@/components/ui/primitives";
+import { Badge } from "@/components/ui/primitives";
 import { feedbackApi, profileApi } from "@/lib/api/client";
 
 export default function AccountPage() {
@@ -38,80 +38,89 @@ export default function AccountPage() {
   }, []);
 
   if (loading) {
-    return <p style={{ margin: 0, color: "var(--text-muted)" }}>Loading account settings...</p>;
+    return (
+      <div className="any-page">
+        <p style={{ margin: 0, color: "#999" }}>Loading account settings...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="workspace-page" style={{ gap: 24 }}>
+    <div className="any-page">
       <div>
-        <div className="eyebrow" style={{ marginBottom: 10, borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
-          Profile / Account
-        </div>
-        <h1 style={{ margin: 0, marginBottom: 8, fontSize: "clamp(28px, 6vw, 40px)" }}>Settings and data management</h1>
-        <p style={{ margin: 0, color: "var(--text-muted)", maxWidth: 760 }}>
+        <h1 className="any-title">
+          Settings and
+          <br />
+          <span className="any-title-accent">data management</span>
+        </h1>
+        <p className="any-subtitle" style={{ maxWidth: 760 }}>
           Manage your facility identity and historical match feedback records.
         </p>
       </div>
 
-      <section className="workspace-block" style={{ display: "grid", gap: 10 }}>
-        <strong>Profile settings</strong>
-        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-          Organization: {profile?.companyName || "—"}
-        </p>
-        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-          Facility: {profile?.facilityName || "—"}
-        </p>
-        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-          Role: {profile?.role || "—"}
-        </p>
+      <section className="any-card" style={{ display: "grid", gap: 12 }}>
+        <p className="any-section-label">Profile settings</p>
+        <div className="any-meta-row">
+          <span className="any-meta-label">Organization</span>
+          <span className="any-meta-value">{profile?.companyName || "—"}</span>
+        </div>
+        <div className="any-meta-row">
+          <span className="any-meta-label">Facility</span>
+          <span className="any-meta-value">{profile?.facilityName || "—"}</span>
+        </div>
+        <div className="any-meta-row">
+          <span className="any-meta-label">Role</span>
+          <span className="any-pill accent">{profile?.role || "—"}</span>
+        </div>
       </section>
-
-      <Divider />
 
       <section style={{ display: "grid", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <strong>Historical feedback</strong>
-          <Button type="button" variant="ghost" onClick={reload}>
+          <p className="any-section-label" style={{ margin: 0 }}>Historical feedback</p>
+          <button type="button" className="any-btn-primary" onClick={reload}>
             Refresh
-          </Button>
+          </button>
         </div>
 
         {!history.length ? (
-          <div className="workspace-block" style={{ color: "var(--text-muted)" }}>
+          <div className="any-empty">
             No feedback recorded yet.
           </div>
         ) : (
           <div style={{ display: "grid", gap: 10 }}>
             {history.map((entry) => (
-              <div key={entry.matchId} className="workspace-block" style={{ padding: 14, display: "grid", gap: 8 }}>
+              <div key={entry.matchId} className="any-card any-card-tight" style={{ display: "grid", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                   <strong>{entry.counterpartName || `Match ${entry.matchId}`}</strong>
-                  <Badge tone={entry.rating === "useful" ? "good" : "bad"}>{entry.rating}</Badge>
+                  <Badge tone="neutral" style={{ border: "0.5px solid #ebb0a5", background: "#fff7f5", color: "#c65440" }}>
+                    {entry.rating}
+                  </Badge>
                 </div>
-                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-                  Match ID: {entry.matchId}
-                </p>
+                <div className="any-meta-row">
+                  <span className="any-meta-label">Match ID</span>
+                  <span className="any-meta-value">{entry.matchId}</span>
+                </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <Button
+                  <button
                     type="button"
-                    variant="soft"
+                    className="any-btn-secondary"
                     onClick={async () => {
                       await feedbackApi.submit({ matchId: entry.matchId, rating: "useful", reason: entry.reason || "" });
                       reload();
                     }}
                   >
                     Set useful
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
-                    variant="danger"
+                    className="any-btn-secondary"
                     onClick={async () => {
                       await feedbackApi.submit({ matchId: entry.matchId, rating: "not_useful", reason: entry.reason || "" });
                       reload();
                     }}
                   >
                     Set not useful
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))}

@@ -6,6 +6,55 @@ from app.core.config import get_settings
 from app.models import User
 
 
+def calculate_compatibility_score(
+    *,
+    distance_km: float,
+    producer_temp_c: float,
+    consumer_min_temp_c: float,
+    volume_match_ratio: float,
+    schedule_overlap_ratio: float,
+) -> dict:
+    """Lightweight deterministic scoring model for dashboard experimentation.
+
+    Returns overall and component scores in range 0..100.
+    """
+    # Distance score: full credit at 0km, decays to 0 at 50km.
+    distance_norm = max(0.0, min(1.0, 1.0 - (distance_km / 50.0)))
+
+    # Temperature score: producer must meet consumer minimum.
+    if producer_temp_c >= consumer_min_temp_c:
+        temp_norm = 1.0
+    else:
+        gap = consumer_min_temp_c - producer_temp_c
+        temp_norm = max(0.0, 1.0 - (gap / 50.0))
+
+    # Ratio features can go above 1 in raw data; cap to 1 for normalized contribution.
+    volume_norm = max(0.0, min(1.0, volume_match_ratio))
+    schedule_norm = max(0.0, min(1.0, schedule_overlap_ratio))
+
+    proximity_score = round(distance_norm * 100.0, 1)
+    temperature_fit_score = round(temp_norm * 100.0, 1)
+    volume_fit_score = round(volume_norm * 100.0, 1)
+    schedule_fit_score = round(schedule_norm * 100.0, 1)
+
+    # Weighted blend.
+    weighted = (
+        0.30 * distance_norm
+        + 0.30 * temp_norm
+        + 0.20 * volume_norm
+        + 0.20 * schedule_norm
+    )
+    compatibility_score = round(max(0.0, min(100.0, weighted * 100.0)), 1)
+
+    return {
+        "compatibility_score": compatibility_score,
+        "proximity_score": proximity_score,
+        "temperature_fit_score": temperature_fit_score,
+        "volume_fit_score": volume_fit_score,
+        "schedule_fit_score": schedule_fit_score,
+    }
+
+
 def fetch_recommendations_for_user(_user: User) -> dict:
     # Deterministic placeholder for list endpoint when no persisted matches exist.
     return {

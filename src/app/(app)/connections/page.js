@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge, Button } from "@/components/ui/primitives";
+import { Badge } from "@/components/ui/primitives";
 import { connectionsApi } from "@/lib/api/client";
 
 function tone(status) {
@@ -41,68 +41,71 @@ export default function ConnectionsPage() {
   }, []);
 
   if (loading) {
-    return <p style={{ margin: 0, color: "var(--text-muted)" }}>Loading connections...</p>;
+    return <p style={{ margin: 0, color: "#999" }}>Loading connections...</p>;
   }
 
   return (
-    <div className="workspace-page">
+    <div className="any-page">
       <div>
-        <div className="eyebrow" style={{ marginBottom: 10, borderLeft: "3px solid var(--primary)", paddingLeft: 10 }}>
-          Connections
-        </div>
-        <h1 style={{ margin: 0, marginBottom: 8, fontSize: "clamp(28px, 6vw, 40px)" }}>Facility connection requests</h1>
-        <p style={{ margin: 0, color: "var(--text-muted)", maxWidth: 760 }}>
+        <h1 className="any-title">
+          Connection
+          <br />
+          <span className="any-title-accent">requests</span>
+        </h1>
+        <p className="any-subtitle" style={{ maxWidth: 760 }}>
           Track requests initiated from match detail pages and update statuses as your engineering conversations evolve.
         </p>
       </div>
 
       {!items.length ? (
-        <div className="workspace-block" style={{ color: "var(--text-muted)" }}>
+        <div className="any-empty">
           No connection requests yet.
         </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           {items.map((item) => (
-            <div key={item.id} className="workspace-block" style={{ display: "grid", gap: 10 }}>
+            <div key={item.id} className="any-card any-card-tight" style={{ display: "grid", gap: 10 }}>
+              <p className="any-section-label" style={{ margin: 0 }}>Connection record</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <strong>{item.counterpart_organization_name}</strong>
-                <Badge tone={tone(item.status)}>{item.status}</Badge>
+                <Badge tone={tone(item.status)} style={{ border: "0.5px solid #e0ddd6", background: "#fff", color: "#555" }}>{item.status}</Badge>
               </div>
-              <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-                Match ID: {item.match_id}
-              </p>
-              {item.message ? <p style={{ margin: 0, fontSize: 13 }}>{item.message}</p> : null}
+              <div className="any-meta-row">
+                <span className="any-meta-label">Match ID</span>
+                <span className="any-meta-value">{item.match_id}</span>
+              </div>
+              {item.message ? <p style={{ margin: 0, fontSize: 13, color: "#555" }}>{item.message}</p> : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <Button
+                <button
                   type="button"
-                  variant="soft"
+                  className="any-btn-secondary"
                   onClick={async () => {
                     await connectionsApi.updateStatus(item.id, "accepted");
                     reload();
                   }}
                 >
                   Mark accepted
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
-                  variant="ghost"
+                  className="any-btn-secondary"
                   onClick={async () => {
                     await connectionsApi.updateStatus(item.id, "rejected");
                     reload();
                   }}
                 >
                   Mark rejected
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
-                  variant="danger"
+                  className="any-btn-primary"
                   onClick={async () => {
                     await connectionsApi.updateStatus(item.id, "pending");
                     reload();
                   }}
                 >
                   Re-open as pending
-                </Button>
+                </button>
               </div>
             </div>
           ))}

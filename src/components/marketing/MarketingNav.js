@@ -7,13 +7,17 @@ export default function MarketingNav() {
       <Link href="/" className="sticky-nav-logo">
         HeatREco
       </Link>
-      <nav aria-label="Marketing" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <nav className="sticky-nav-actions" aria-label="Marketing">
         <Link href="/auth/login" style={{ fontWeight: 600, fontSize: 14 }}>
           Login
         </Link>
         <Link href="/auth/register">
-          <Button shape="sharp">Get started</Button>
+          <Button shape="sharp">Start matching</Button>
         </Link>
+        <button type="button" className="sticky-nav-burger" aria-label="Open navigation menu">
+          <span />
+          <span />
+        </button>
       </nav>
     </header>
   );
