@@ -45,4 +45,29 @@ docs_str/
 #Python env
 HelixEnv/
 
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local Python envs
+.venv/
+venv/
+env/
+
+# Python build/dist
+dist/
+build/
+*.egg-info/
+
+# Local runtime databases
+*.db
+*.sqlite
+*.sqlite3
+[heatreco.db](http://_vscodecontentref_/1)
+[test_match_feedback.db](http://_vscodecontentref_/2)
+
 
