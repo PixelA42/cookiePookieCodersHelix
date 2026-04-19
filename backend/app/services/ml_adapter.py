@@ -15,7 +15,12 @@ def fetch_recommendations_for_user(_user: User) -> dict:
     }
 
 
-def score_match_candidates(candidates: Sequence[dict]) -> dict:
+def score_match_candidates(
+    candidates: Sequence[dict],
+    *,
+    feedback_context: Sequence[dict] | None = None,
+    requester_user_id: int | None = None,
+) -> dict:
     """Calls ML scoring service and returns contract-safe output.
 
     Expected ML response JSON shape:
@@ -39,7 +44,11 @@ def score_match_candidates(candidates: Sequence[dict]) -> dict:
             "scores": [],
         }
 
-    payload = {"pairs": list(candidates)}
+    payload = {
+        "pairs": list(candidates),
+        "feedback_events": list(feedback_context or []),
+        "requesting_user_id": requester_user_id,
+    }
 
     try:
         with httpx.Client(timeout=settings.ml_service_timeout_seconds) as client:

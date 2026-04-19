@@ -5,21 +5,24 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import create_access_token, hash_password, verify_otp, verify_password
+from app.core.security import create_access_token, hash_password, get_verified_current_user, verify_otp, verify_password
 from app.db import get_db
 from app.models import User
 from app.schemas import (
+    CurrentUserResponse,
     LoginRequest,
     MessageResponse,
     RegisterRequest,
     ResendOtpRequest,
     TokenResponse,
+    UpdateCurrentUserRequest,
     VerifyOtpRequest,
 )
 from app.services.email_service import send_otp_email
 from app.services.otp_service import get_active_otp_record, issue_new_otp
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+public_router = APIRouter(tags=["auth"])
 
 
 def _find_user_by_email(db: Session, email: str) -> User | None:
@@ -28,6 +31,7 @@ def _find_user_by_email(db: Session, email: str) -> User | None:
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+@public_router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     existing_user = _find_user_by_email(db, payload.email)
     if existing_user and existing_user.is_email_verified:
@@ -145,3 +149,24 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     token = create_access_token(subject=str(user.id))
     return TokenResponse(access_token=token)
+
+
+@router.get("/me", response_model=CurrentUserResponse)
+def get_current_account(current_user: User = Depends(get_verified_current_user)):
+    return current_user
+
+
+@router.put("/me", response_model=CurrentUserResponse)
+def update_current_account(
+    payload: UpdateCurrentUserRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_current_user),
+):
+    persisted_user = db.get(User, current_user.id)
+    if not persisted_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    persisted_user.organization_name = payload.organization_name.strip()
+    db.commit()
+    db.refresh(persisted_user)
+    return persisted_user

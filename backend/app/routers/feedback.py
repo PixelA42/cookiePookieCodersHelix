@@ -5,7 +5,12 @@ from app.core.security import get_verified_current_user
 from app.db import get_db
 from app.models import User
 from app.schemas import FeedbackHistoryResponse, FeedbackRequest, FeedbackResponse
-from app.services.feedback_service import get_match_for_user, list_feedback_history_for_user, upsert_feedback
+from app.services.feedback_service import (
+    get_match_for_user,
+    list_feedback_history_for_user,
+    record_feedback_event,
+    upsert_feedback,
+)
 
 router = APIRouter(prefix="/matches", tags=["feedback"])
 
@@ -28,4 +33,17 @@ def submit_feedback(
     match = get_match_for_user(db, current_user, match_id)
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
-    return upsert_feedback(db, match_id=match_id, user=current_user, feedback_label=payload.feedback_label)
+    feedback = upsert_feedback(
+        db,
+        match_id=match_id,
+        user=current_user,
+        feedback_label=payload.resolved_feedback_label(),
+    )
+    record_feedback_event(
+        db,
+        match_id=match_id,
+        user=current_user,
+        status=payload.status,
+        reason=payload.reason,
+    )
+    return feedback

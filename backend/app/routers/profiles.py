@@ -11,6 +11,8 @@ from app.schemas import (
     ProducerProfileCreateRequest,
     ProducerProfileResponse,
     ProducerProfileUpdateRequest,
+    UnifiedProfileResponse,
+    UnifiedProfileUpsertRequest,
 )
 from app.services.profile_service import (
     create_consumer_profile,
@@ -30,6 +32,116 @@ def _enforce_role(user: User, required_role: UserRole) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Only {required_role.value} users can access this endpoint",
         )
+
+
+def _as_unified_profile(db: Session, current_user: User) -> UnifiedProfileResponse | None:
+    producer = get_producer_profile_by_user(db, current_user.id)
+    if producer:
+        return UnifiedProfileResponse(
+            role=UserRole.producer,
+            facility_name=producer.facility_name,
+            latitude=producer.latitude,
+            longitude=producer.longitude,
+            schedule_description=producer.schedule_description,
+            supply_temperature_c=producer.supply_temperature_c,
+            heat_output_kw=producer.heat_output_kw,
+        )
+
+    consumer = get_consumer_profile_by_user(db, current_user.id)
+    if consumer:
+        return UnifiedProfileResponse(
+            role=UserRole.consumer,
+            facility_name=consumer.facility_name,
+            latitude=consumer.latitude,
+            longitude=consumer.longitude,
+            schedule_description=consumer.schedule_description,
+            demand_temperature_c=consumer.demand_temperature_c,
+            flow_rate_lph=consumer.flow_rate_lph,
+        )
+    return None
+
+
+@router.post("", response_model=UnifiedProfileResponse)
+def upsert_profile(
+    payload: UnifiedProfileUpsertRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_current_user),
+):
+    if payload.role != current_user.role:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Profile role must match account role")
+
+    if current_user.role == UserRole.producer:
+        existing = get_producer_profile_by_user(db, current_user.id)
+        if existing:
+            update_producer_profile(
+                db,
+                existing,
+                ProducerProfileUpdateRequest(
+                    facility_name=payload.facility_name,
+                    latitude=payload.latitude,
+                    longitude=payload.longitude,
+                    supply_temperature_c=payload.supply_temperature_c,
+                    heat_output_kw=payload.heat_output_kw,
+                    schedule_description=payload.schedule_description,
+                ),
+            )
+        else:
+            create_producer_profile(
+                db,
+                current_user.id,
+                ProducerProfileCreateRequest(
+                    facility_name=payload.facility_name,
+                    latitude=payload.latitude,
+                    longitude=payload.longitude,
+                    supply_temperature_c=payload.supply_temperature_c,
+                    heat_output_kw=payload.heat_output_kw,
+                    schedule_description=payload.schedule_description,
+                ),
+            )
+    else:
+        existing = get_consumer_profile_by_user(db, current_user.id)
+        if existing:
+            update_consumer_profile(
+                db,
+                existing,
+                ConsumerProfileUpdateRequest(
+                    facility_name=payload.facility_name,
+                    latitude=payload.latitude,
+                    longitude=payload.longitude,
+                    demand_temperature_c=payload.demand_temperature_c,
+                    flow_rate_lph=payload.flow_rate_lph,
+                    schedule_description=payload.schedule_description,
+                ),
+            )
+        else:
+            create_consumer_profile(
+                db,
+                current_user.id,
+                ConsumerProfileCreateRequest(
+                    facility_name=payload.facility_name,
+                    latitude=payload.latitude,
+                    longitude=payload.longitude,
+                    demand_temperature_c=payload.demand_temperature_c,
+                    flow_rate_lph=payload.flow_rate_lph,
+                    schedule_description=payload.schedule_description,
+                ),
+            )
+
+    profile = _as_unified_profile(db, current_user)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to save profile")
+    return profile
+
+
+@router.get("/me", response_model=UnifiedProfileResponse)
+def get_my_profile(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_current_user),
+):
+    profile = _as_unified_profile(db, current_user)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    return profile
 
 
 @router.post("/producer", response_model=ProducerProfileResponse, status_code=status.HTTP_201_CREATED)

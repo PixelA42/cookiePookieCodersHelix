@@ -46,17 +46,28 @@ def create_connection_request(
     existing_stmt = select(ConnectionRequest).where(
         and_(
             ConnectionRequest.match_id == match_id,
-            ConnectionRequest.requester_user_id == requester_id,
-            ConnectionRequest.counterpart_user_id == counterpart_id,
+            or_(
+                and_(
+                    ConnectionRequest.requester_user_id == requester_id,
+                    ConnectionRequest.counterpart_user_id == counterpart_id,
+                ),
+                and_(
+                    ConnectionRequest.requester_user_id == counterpart_id,
+                    ConnectionRequest.counterpart_user_id == requester_id,
+                ),
+            ),
         )
     )
     existing = db.execute(existing_stmt).scalars().first()
     if existing:
         existing.status = ConnectionStatus.pending
         existing.message = message
+        if existing.requester_user_id != requester_id:
+            existing.requester_user_id = requester_id
+            existing.counterpart_user_id = counterpart_id
         db.commit()
         db.refresh(existing)
-        return _to_response(existing, user.id)
+        return _to_response(existing, requester_id)
 
     created = ConnectionRequest(
         match_id=match_id,
@@ -68,7 +79,7 @@ def create_connection_request(
     db.add(created)
     db.commit()
     db.refresh(created)
-    return _to_response(created, user.id)
+    return _to_response(created, requester_id)
 
 
 def update_connection_status(
@@ -113,7 +124,7 @@ def _to_response(row: ConnectionRequest, current_user_id: int) -> ConnectionRequ
         id=row.id,
         match_id=row.match_id,
         requester_user_id=row.requester_user_id,
-        counterpart_user_id=row.counterpart_user_id,
+        counterpart_user_id=counterpart.id,
         counterpart_organization_name=counterpart.organization_name,
         status=row.status,
         message=row.message,

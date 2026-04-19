@@ -17,6 +17,11 @@ class FeedbackLabel(str, Enum):
     not_useful = "not_useful"
 
 
+class FeedbackStatus(str, Enum):
+    interested = "interested"
+    rejected = "rejected"
+
+
 class ConnectionStatus(str, Enum):
     pending = "pending"
     accepted = "accepted"
@@ -185,6 +190,24 @@ class MatchFeedback(Base):
 
     match: Mapped[Match] = relationship("Match", back_populates="feedback_entries")
     user: Mapped[User] = relationship("User", back_populates="match_feedback")
+
+
+class MatchFeedbackEvent(Base):
+    __tablename__ = "match_feedback_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    match_id: Mapped[int] = mapped_column(
+        ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[FeedbackStatus] = mapped_column(
+        SqlEnum(FeedbackStatus, name="feedback_status"), nullable=False
+    )
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    match: Mapped[Match] = relationship("Match")
+    user: Mapped[User] = relationship("User")
 
 
 class ConnectionRequest(Base):

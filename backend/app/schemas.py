@@ -1,8 +1,13 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from datetime import datetime
 
 from app.models import ConnectionStatus, FeedbackLabel, UserRole
+
+
+class FeedbackStatus(str):
+    interested = "interested"
+    rejected = "rejected"
 
 
 class RegisterRequest(BaseModel):
@@ -33,6 +38,20 @@ class MessageResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class CurrentUserResponse(BaseModel):
+    id: int
+    organization_name: str
+    email: EmailStr
+    role: UserRole
+    is_email_verified: bool
+
+    model_config = {"from_attributes": True}
+
+
+class UpdateCurrentUserRequest(BaseModel):
+    organization_name: str = Field(min_length=2, max_length=255)
 
 
 class ProducerProfileCreateRequest(BaseModel):
@@ -97,6 +116,40 @@ class ConsumerProfileResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UnifiedProfileUpsertRequest(BaseModel):
+    role: UserRole
+    facility_name: str = Field(min_length=2, max_length=255)
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    schedule_description: str = Field(min_length=2, max_length=255)
+    supply_temperature_c: float | None = None
+    heat_output_kw: float | None = Field(default=None, gt=0)
+    demand_temperature_c: float | None = None
+    flow_rate_lph: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def validate_role_specific_fields(self):
+        if self.role == UserRole.producer:
+            if self.supply_temperature_c is None or self.heat_output_kw is None:
+                raise ValueError("Producer profile requires supply_temperature_c and heat_output_kw")
+        if self.role == UserRole.consumer:
+            if self.demand_temperature_c is None or self.flow_rate_lph is None:
+                raise ValueError("Consumer profile requires demand_temperature_c and flow_rate_lph")
+        return self
+
+
+class UnifiedProfileResponse(BaseModel):
+    role: UserRole
+    facility_name: str
+    latitude: float
+    longitude: float
+    schedule_description: str
+    supply_temperature_c: float | None = None
+    heat_output_kw: float | None = None
+    demand_temperature_c: float | None = None
+    flow_rate_lph: float | None = None
+
+
 class MatchCardResponse(BaseModel):
     match_id: int
     counterpart_user_id: int
@@ -146,7 +199,24 @@ class MatchDetailResponse(BaseModel):
 
 
 class FeedbackRequest(BaseModel):
-    feedback_label: FeedbackLabel
+    feedback_label: FeedbackLabel | None = None
+    status: str | None = None
+    reason: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def validate_feedback_payload(self):
+        if self.feedback_label is None and self.status is None:
+            raise ValueError("Either feedback_label or status must be provided")
+        if self.status is not None and self.status not in {FeedbackStatus.interested, FeedbackStatus.rejected}:
+            raise ValueError("status must be either 'interested' or 'rejected'")
+        return self
+
+    def resolved_feedback_label(self) -> FeedbackLabel:
+        if self.feedback_label is not None:
+            return self.feedback_label
+        if self.status == FeedbackStatus.interested:
+            return FeedbackLabel.useful
+        return FeedbackLabel.not_useful
 
 
 class FeedbackResponse(BaseModel):

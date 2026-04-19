@@ -1,8 +1,8 @@
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.inspection import inspect
 
-from app.models import Match, MatchFeedback, User
+from app.models import FeedbackStatus, Match, MatchFeedback, MatchFeedbackEvent, User
 from app.schemas import FeedbackHistoryItem
 
 
@@ -39,11 +39,25 @@ def upsert_feedback(db: Session, match_id: int, user: User, feedback_label) -> M
     return feedback
 
 
+def record_feedback_event(db: Session, match_id: int, user: User, status: str | None, reason: str | None) -> None:
+    if status is None:
+        return
+    event = MatchFeedbackEvent(
+        match_id=match_id,
+        user_id=_user_id(user),
+        status=FeedbackStatus(status),
+        reason=reason,
+    )
+    db.add(event)
+    db.commit()
+
+
 def list_feedback_history_for_user(db: Session, user: User) -> list[FeedbackHistoryItem]:
     user_id = _user_id(user)
     stmt = (
         select(MatchFeedback, Match)
         .join(Match, Match.id == MatchFeedback.match_id)
+        .options(joinedload(Match.producer_user), joinedload(Match.consumer_user))
         .where(MatchFeedback.user_id == user_id)
         .order_by(MatchFeedback.updated_at.desc(), MatchFeedback.id.desc())
     )
